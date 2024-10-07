@@ -7,6 +7,7 @@
 if (empty($site)) $site = $this->api()->searchOne('sites', ['slug' => $this->params()->fromRoute('site-slug') ?: 'transcription'])->getContent() ?: $this->api()->read('sites', ['id' => $this->setting('default_site')])->getContent();
 $scriptoSiteProjectId = $this->params()->fromRoute('site-project-id') ?: 1;
 $scriptoProjectId = $this->params()->fromRoute('project-id') ?: 1;
+$totalScriptoProjects = $this->api()->search('scripto_projects')->getTotalResults();
 
 $plugins = $this->getHelperPluginManager();
 $translate = $plugins->get('translate');
@@ -40,11 +41,15 @@ $planURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'plan-
 $mentionsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'mentions-legales'], true);
 $confidentialiteURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'politique-de-confidentialite'], true);
 
+$projectsURL = $url('scripto-project', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'action' => 'browse'], true);
 $siteURL = $url('site/page', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'page-slug' => 'accueil'], true);
-$transcrireURL = $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'item'], true);
+$transcrireURL = $totalScriptoProjects <= 1
+    ? $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'item'], true)
+    : $projectsURL;
 $projetURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'projet'], true);
-$consignesURL = $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'guidelines'], true);
+// Les consignes sont les mêmes pour tous les projets.
 // $consignesURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'consignes-de-transcription'], true);
+$consignesURL = $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => /* $scriptoProjectId */ 1, 'action' => 'guidelines'], true);
 $creerCompteURL = $url('scripto', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'action' => 'create-account'], true);
 $contactURL2 = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'contact'], true);
 
@@ -130,8 +135,24 @@ $user = $this->identity();
                         <a href="<?= $aProposURL ?>">À propos</a>
                     </li>
                     */ ?>
+                    <?php if ($totalScriptoProjects <= 1): ?>
                     <li><a href="<?= $transcrireURL ?>">Transcrire les collections</a></li>
-                    <li><?php /* le css fonctionne pour le 3e item */ ?></li>
+                    <?php else: ?>
+                    <li class="with-submenu">
+                        <a href="#">Transcrire les collections</a>
+                        <div class="submenu">
+                            <div class="menu-items">
+                                <ul>
+                                    <li><?= $hyperlink($translate('Tous les projets'), $projectsURL) ?></li>
+                                    <?php /** @var \Scripto\Api\Representation\ScriptoProjectRepresentation $scriptoProject */ ?>
+                                    <?php foreach ($this->api()->search('scripto_projects')->getContent() as $scriptoProject): ?>
+                                    <li><?= $scriptoProject->link($scriptoProject->title()) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                    <?php endif; ?>
                     <li class="with-submenu">
                         <a href="#">À propos</a>
                         <div class="submenu">
