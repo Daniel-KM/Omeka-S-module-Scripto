@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Entity;
 
 use DateTime;
@@ -123,7 +123,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->id;
     }
 
-    public function setScriptoItem(ScriptoItem $scriptoItem)
+    public function setScriptoItem(ScriptoItem $scriptoItem): void
     {
         $this->scriptoItem = $scriptoItem;
     }
@@ -133,7 +133,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->scriptoItem;
     }
 
-    public function setMedia(Media $media)
+    public function setMedia(Media $media): void
     {
         $this->media = $media;
     }
@@ -143,7 +143,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->media;
     }
 
-    public function setPosition($position)
+    public function setPosition($position): void
     {
         $this->position = $position;
     }
@@ -153,7 +153,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->position;
     }
 
-    public function setSynced(DateTime $dateTime)
+    public function setSynced(DateTime $dateTime): void
     {
         $this->synced = $dateTime;
     }
@@ -163,7 +163,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->synced;
     }
 
-    public function setEdited(DateTime $dateTime = null)
+    public function setEdited(DateTime $dateTime = null): void
     {
         $this->edited = $dateTime;
     }
@@ -173,7 +173,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->edited;
     }
 
-    public function setEditedBy($editedBy)
+    public function setEditedBy($editedBy): void
     {
         $this->editedBy = $editedBy;
     }
@@ -183,7 +183,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->editedBy;
     }
 
-    public function setCompleted(DateTime $dateTime = null)
+    public function setCompleted(DateTime $dateTime = null): void
     {
         $this->completed = $dateTime;
     }
@@ -193,7 +193,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->completed;
     }
 
-    public function setCompletedBy($completedBy)
+    public function setCompletedBy($completedBy): void
     {
         $this->completedBy = $completedBy;
     }
@@ -203,7 +203,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->completedBy;
     }
 
-    public function setCompletedRevision($completedRevision)
+    public function setCompletedRevision($completedRevision): void
     {
         $this->completedRevision = $completedRevision;
     }
@@ -213,7 +213,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->completedRevision;
     }
 
-    public function setApproved(DateTime $dateTime = null)
+    public function setApproved(DateTime $dateTime = null): void
     {
         $this->approved = $dateTime;
     }
@@ -223,7 +223,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->approved;
     }
 
-    public function setApprovedBy(User $approvedBy = null)
+    public function setApprovedBy(User $approvedBy = null): void
     {
         $this->approvedBy = $approvedBy;
     }
@@ -233,7 +233,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->approvedBy;
     }
 
-    public function setApprovedRevision($approvedRevision)
+    public function setApprovedRevision($approvedRevision): void
     {
         $this->approvedRevision = $approvedRevision;
     }
@@ -243,7 +243,7 @@ class ScriptoMedia extends AbstractEntity
         return $this->approvedRevision;
     }
 
-    public function setImportedHtml($importedHtml)
+    public function setImportedHtml($importedHtml): void
     {
         $this->importedHtml = $importedHtml;
     }
@@ -264,7 +264,7 @@ class ScriptoMedia extends AbstractEntity
      * @param bool $markComplete Mark the newest revision as complete?
      * @param bool $markApproved Mark the newest revision as approved?
      */
-    public function setWikitextData($wikitext, $summary, $markComplete = false, $markApproved = false)
+    public function setWikitextData($wikitext, $summary, $markComplete = false, $markApproved = false): void
     {
         $this->wikitextData['wikitext'] = $wikitext;
         $this->wikitextData['summary'] = $summary;
@@ -310,7 +310,7 @@ class ScriptoMedia extends AbstractEntity
     /**
      * @PrePersist
      */
-    public function prePersist(LifecycleEventArgs $eventArgs)
+    public function prePersist(LifecycleEventArgs $eventArgs): void
     {
         $this->setSynced(new DateTime('now'));
     }

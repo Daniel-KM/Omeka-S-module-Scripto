@@ -1,6 +1,6 @@
 <?php
-$label = isset($data['label']) ? $data['label'] : null;
-$projectId = isset($data['project_id']) ? $data['project_id'] : null;
+$label = $data['label'] ?? null;
+$projectId = $data['project_id'] ?? null;
 $select = $this->scripto()->getProjectSelect('project_id', $projectId);
 $select->setAttributes(['data-name' => 'project_id']);
 ?>

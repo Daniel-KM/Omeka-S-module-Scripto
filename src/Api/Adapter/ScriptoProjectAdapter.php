@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Api\Adapter;
 
 use Doctrine\ORM\QueryBuilder;
@@ -32,7 +32,7 @@ class ScriptoProjectAdapter extends AbstractEntityAdapter
         return \Scripto\Entity\ScriptoProject::class;
     }
 
-    public function buildQuery(QueryBuilder $qb, array $query)
+    public function buildQuery(QueryBuilder $qb, array $query): void
     {
         if (isset($query['owner_id'])) {
             $alias = $this->createAlias();
@@ -67,7 +67,7 @@ class ScriptoProjectAdapter extends AbstractEntityAdapter
             );
         }
     }
-    public function validateRequest(Request $request, ErrorStore $errorStore)
+    public function validateRequest(Request $request, ErrorStore $errorStore): void
     {
         $data = $request->getContent();
         if (isset($data['o:owner']) && !isset($data['o:owner']['o:id'])) {
@@ -81,7 +81,7 @@ class ScriptoProjectAdapter extends AbstractEntityAdapter
         }
     }
 
-    public function hydrate(Request $request, EntityInterface $entity, ErrorStore $errorStore)
+    public function hydrate(Request $request, EntityInterface $entity, ErrorStore $errorStore): void
     {
         $this->hydrateOwner($request, $entity);
         if ($this->shouldHydrate($request, 'o:is_public')) {
@@ -171,7 +171,7 @@ class ScriptoProjectAdapter extends AbstractEntityAdapter
         }
     }
 
-    public function validateEntity(EntityInterface $entity, ErrorStore $errorStore)
+    public function validateEntity(EntityInterface $entity, ErrorStore $errorStore): void
     {
         if (null === $entity->getTitle()) {
             $errorStore->addError('o-module-scripto:title', 'A Scripto project title must not be null'); // @translate

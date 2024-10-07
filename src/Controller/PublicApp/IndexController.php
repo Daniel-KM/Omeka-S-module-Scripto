@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Controller\PublicApp;
 
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
 use Scripto\Form\CreateAccountForm;
 use Scripto\Mediawiki\Exception\CreateaccountException;
-use Laminas\View\Model\ViewModel;
-use Laminas\Mvc\Controller\AbstractActionController;
 
 class IndexController extends AbstractActionController
 {

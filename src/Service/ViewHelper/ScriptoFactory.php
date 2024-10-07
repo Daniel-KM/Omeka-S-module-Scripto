@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Service\ViewHelper;
 
-use Scripto\ViewHelper\Scripto;
 use Interop\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Scripto\ViewHelper\Scripto;
 
 class ScriptoFactory implements FactoryInterface
 {

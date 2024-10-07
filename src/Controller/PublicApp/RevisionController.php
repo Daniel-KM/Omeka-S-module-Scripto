@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Controller\PublicApp;
 
-use Scripto\Mediawiki\Exception\QueryException;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
+use Scripto\Mediawiki\Exception\QueryException;
 
 class RevisionController extends AbstractActionController
 {

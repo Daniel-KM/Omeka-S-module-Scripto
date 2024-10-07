@@ -1,18 +1,18 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Controller\Admin;
 
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
 use Omeka\Form\ConfirmForm;
 use Omeka\Stdlib\HtmlPurifier;
 use Omeka\Stdlib\Message;
 use Scripto\Form\ProjectForm;
 use Scripto\Form\ProjectImportForm;
-use Scripto\Form\ProjectUnimportForm;
 use Scripto\Form\ProjectSyncForm;
+use Scripto\Form\ProjectUnimportForm;
 use Scripto\Job\ImportProject;
 use Scripto\Job\SyncProject;
 use Scripto\Job\UnimportProject;
-use Laminas\Mvc\Controller\AbstractActionController;
-use Laminas\View\Model\ViewModel;
 
 class ProjectController extends AbstractActionController
 {

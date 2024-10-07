@@ -25,7 +25,7 @@ $this->scripto()->postSubtitle($sMedia->link($media->displayTitle(), 'show-talk'
             <tbody>
             <?php $latestId = $revisions[0]['revid']; ?>
             <?php foreach ($revisions as $index => $revision): ?>
-            <?php $childRevision = isset($revisions[$index + 1]) ? $revisions[$index + 1] : null; ?>
+            <?php $childRevision = $revisions[$index + 1] ?? null; ?>
                 <tr>
                     <td>
                         <div class="compare-controls">

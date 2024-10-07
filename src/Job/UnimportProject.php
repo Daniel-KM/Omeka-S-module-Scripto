@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Job;
 
 /**
@@ -6,7 +6,7 @@ namespace Scripto\Job;
  */
 class UnimportProject extends ScriptoJob
 {
-    public function perform()
+    public function perform(): void
     {
         $em = $this->getServiceLocator()->get('Omeka\EntityManager');
         $project = $em->find('Scripto\Entity\ScriptoProject', $this->getArg('scripto_project_id'));

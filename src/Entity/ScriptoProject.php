@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Entity;
 
 use DateTime;
@@ -160,7 +160,7 @@ class ScriptoProject extends AbstractEntity
         return $this->id;
     }
 
-    public function setOwner(User $owner = null)
+    public function setOwner(User $owner = null): void
     {
         $this->owner = $owner;
     }
@@ -170,7 +170,7 @@ class ScriptoProject extends AbstractEntity
         return $this->owner;
     }
 
-    public function setIsPublic($isPublic)
+    public function setIsPublic($isPublic): void
     {
         $this->isPublic = (bool) $isPublic;
     }
@@ -180,7 +180,7 @@ class ScriptoProject extends AbstractEntity
         return (bool) $this->isPublic;
     }
 
-    public function setItemSet(ItemSet $itemSet = null)
+    public function setItemSet(ItemSet $itemSet = null): void
     {
         $this->itemSet = $itemSet;
     }
@@ -190,7 +190,7 @@ class ScriptoProject extends AbstractEntity
         return $this->itemSet;
     }
 
-    public function setMediaTypes(array $mediaTypes = null)
+    public function setMediaTypes(array $mediaTypes = null): void
     {
         $this->mediaTypes = $mediaTypes;
     }
@@ -200,7 +200,7 @@ class ScriptoProject extends AbstractEntity
         return $this->mediaTypes;
     }
 
-    public function setProperty(Property $property = null)
+    public function setProperty(Property $property = null): void
     {
         $this->property = $property;
     }
@@ -210,7 +210,7 @@ class ScriptoProject extends AbstractEntity
         return $this->property;
     }
 
-    public function setLang($lang)
+    public function setLang($lang): void
     {
         $this->lang = $lang;
     }
@@ -220,7 +220,7 @@ class ScriptoProject extends AbstractEntity
         return $this->lang;
     }
 
-    public function setImportTarget($importTarget)
+    public function setImportTarget($importTarget): void
     {
         $this->importTarget = $importTarget;
     }
@@ -230,7 +230,7 @@ class ScriptoProject extends AbstractEntity
         return $this->importTarget;
     }
 
-    public function setTitle($title)
+    public function setTitle($title): void
     {
         $this->title = $title;
     }
@@ -240,7 +240,7 @@ class ScriptoProject extends AbstractEntity
         return $this->title;
     }
 
-    public function setDescription($description)
+    public function setDescription($description): void
     {
         $this->description = $description;
     }
@@ -250,7 +250,7 @@ class ScriptoProject extends AbstractEntity
         return $this->description;
     }
 
-    public function setGuidelines($guidelines)
+    public function setGuidelines($guidelines): void
     {
         $this->guidelines = $guidelines;
     }
@@ -260,7 +260,7 @@ class ScriptoProject extends AbstractEntity
         return $this->guidelines;
     }
 
-    public function setCreateAccountText($createAccountText)
+    public function setCreateAccountText($createAccountText): void
     {
         $this->createAccountText = $createAccountText;
     }
@@ -270,7 +270,7 @@ class ScriptoProject extends AbstractEntity
         return $this->createAccountText;
     }
 
-    public function setBrowseLayout($browseLayout)
+    public function setBrowseLayout($browseLayout): void
     {
         $this->browseLayout = $browseLayout;
     }
@@ -280,7 +280,7 @@ class ScriptoProject extends AbstractEntity
         return $this->browseLayout;
     }
 
-    public function setFilterApproved($filterApproved)
+    public function setFilterApproved($filterApproved): void
     {
         $this->filterApproved = (bool) $filterApproved;
     }
@@ -290,7 +290,7 @@ class ScriptoProject extends AbstractEntity
         return $this->filterApproved;
     }
 
-    public function setItemType($itemType)
+    public function setItemType($itemType): void
     {
         $this->itemType = $itemType;
     }
@@ -300,7 +300,7 @@ class ScriptoProject extends AbstractEntity
         return $this->itemType;
     }
 
-    public function setMediaType($mediaType)
+    public function setMediaType($mediaType): void
     {
         $this->mediaType = $mediaType;
     }
@@ -310,7 +310,7 @@ class ScriptoProject extends AbstractEntity
         return $this->mediaType;
     }
 
-    public function setContentType($contentType)
+    public function setContentType($contentType): void
     {
         $this->contentType = $contentType;
     }
@@ -320,7 +320,7 @@ class ScriptoProject extends AbstractEntity
         return $this->contentType;
     }
 
-    public function setCreated(DateTime $dateTime)
+    public function setCreated(DateTime $dateTime): void
     {
         $this->created = $dateTime;
     }
@@ -330,7 +330,7 @@ class ScriptoProject extends AbstractEntity
         return $this->created;
     }
 
-    public function setSynced(DateTime $dateTime = null)
+    public function setSynced(DateTime $dateTime = null): void
     {
         $this->synced = $dateTime;
     }
@@ -340,7 +340,7 @@ class ScriptoProject extends AbstractEntity
         return $this->synced;
     }
 
-    public function setImported(DateTime $dateTime = null)
+    public function setImported(DateTime $dateTime = null): void
     {
         $this->imported = $dateTime;
     }
@@ -358,7 +358,7 @@ class ScriptoProject extends AbstractEntity
     /**
      * @PrePersist
      */
-    public function prePersist(LifecycleEventArgs $eventArgs)
+    public function prePersist(LifecycleEventArgs $eventArgs): void
     {
         $this->setCreated(new DateTime('now'));
     }

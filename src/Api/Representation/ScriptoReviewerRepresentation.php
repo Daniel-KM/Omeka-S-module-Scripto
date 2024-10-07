@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Api\Representation;
 
+use Laminas\ServiceManager\ServiceLocatorInterface;
 use Omeka\Api\Representation\AbstractRepresentation;
 use Scripto\Entity\ScriptoReviewer;
-use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class ScriptoReviewerRepresentation extends AbstractRepresentation
 {

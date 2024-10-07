@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Api\Adapter;
 
 use Doctrine\ORM\QueryBuilder;
@@ -30,7 +30,7 @@ class ScriptoItemAdapter extends AbstractEntityAdapter
         return \Scripto\Entity\ScriptoItem::class;
     }
 
-    public function create(Request $request)
+    public function create(Request $request): void
     {
         // Scripto items are created only when a project is synced.
         throw new Exception\OperationNotImplementedException(
@@ -38,7 +38,7 @@ class ScriptoItemAdapter extends AbstractEntityAdapter
         );
     }
 
-    public function buildQuery(QueryBuilder $qb, array $query)
+    public function buildQuery(QueryBuilder $qb, array $query): void
     {
         if (isset($query['scripto_project_id'])) {
             $alias = $this->createAlias();
@@ -113,15 +113,15 @@ class ScriptoItemAdapter extends AbstractEntityAdapter
         }
     }
 
-    public function validateRequest(Request $request, ErrorStore $errorStore)
+    public function validateRequest(Request $request, ErrorStore $errorStore): void
     {
     }
 
-    public function hydrate(Request $request, EntityInterface $entity, ErrorStore $errorStore)
+    public function hydrate(Request $request, EntityInterface $entity, ErrorStore $errorStore): void
     {
     }
 
-    public function validateEntity(EntityInterface $entity, ErrorStore $errorStore)
+    public function validateEntity(EntityInterface $entity, ErrorStore $errorStore): void
     {
         if (null === $entity->getScriptoProject()) {
             $errorStore->addError('o-module-scripto:project', 'A Scripto project must not be null'); // @translate

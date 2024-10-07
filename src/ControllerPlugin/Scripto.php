@@ -1,12 +1,12 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\ControllerPlugin;
 
+use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
 use Omeka\Api\Exception\NotFoundException;
 use Scripto\Form\ScriptoLoginForm;
 use Scripto\Form\ScriptoLogoutForm;
 use Scripto\Mediawiki\ApiClient;
 use Scripto\Mediawiki\Exception\ClientloginException;
-use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
 
 /**
  * Controller plugin used for Scripto-specific functionality.
@@ -118,7 +118,7 @@ class Scripto extends AbstractPlugin
      *
      * @param array An array of Scripto media representations
      */
-    public function cacheMediawikiPages(array $sMedia)
+    public function cacheMediawikiPages(array $sMedia): void
     {
         $titles = [];
         foreach ($sMedia as $sm) {

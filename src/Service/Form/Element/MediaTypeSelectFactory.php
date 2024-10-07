@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Service\Form\Element;
 
-use Scripto\Form\Element\MediaTypeSelect;
 use Interop\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Scripto\Form\Element\MediaTypeSelect;
 
 class MediaTypeSelectFactory implements FactoryInterface
 {

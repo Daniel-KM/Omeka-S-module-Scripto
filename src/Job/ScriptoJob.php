@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Job;
 
 use Omeka\Job\AbstractJob;
@@ -67,7 +67,7 @@ abstract class ScriptoJob extends AbstractJob
      *
      * @param ScriptoProject $project
      */
-    public function unimportProject(ScriptoProject $project)
+    public function unimportProject(ScriptoProject $project): void
     {
         if (!$project->getProperty()) {
             throw new Exception\RuntimeException('Cannot unimport a project without a property.'); // @translate

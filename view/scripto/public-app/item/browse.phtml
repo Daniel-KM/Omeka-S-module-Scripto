@@ -3,21 +3,21 @@ $this->scripto()->postTitle($project->title());
 $filters = [
     [
         'label' => $this->translate('Is in progress'),
-        'value' => 'is_in_progress'
+        'value' => 'is_in_progress',
     ],
     [
         'label' => $this->translate('Is new'),
-        'value' => 'is_new'
+        'value' => 'is_new',
     ],
 ];
 if (!$project->filterApproved()) {
     $filters[] = [
         'label' => $this->translate('Is approved'),
-        'value' => 'is_approved'
+        'value' => 'is_approved',
     ];
     $filters[] = [
         'label' => $this->translate('Is not approved'),
-        'value' => 'is_not_approved'
+        'value' => 'is_not_approved',
     ];
 }
 ?>
@@ -46,7 +46,7 @@ if (!$project->filterApproved()) {
                     ],
                     [
                         'label' => $this->scripto()->translate($project->contentType(), 'Last edited'),
-                        'value' => 'edited'
+                        'value' => 'edited',
                     ],
                 ]); ?>
             </div>

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Site\Navigation\Link;
 
 use Omeka\Api\Representation\SiteRepresentation;

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Api\Adapter;
 
 use DateTime;
@@ -39,7 +39,7 @@ class ScriptoMediaAdapter extends AbstractEntityAdapter
         return \Scripto\Entity\ScriptoMedia::class;
     }
 
-    public function create(Request $request)
+    public function create(Request $request): void
     {
         // Scripto items are created only when a project is synced.
         throw new Exception\OperationNotImplementedException(
@@ -47,7 +47,7 @@ class ScriptoMediaAdapter extends AbstractEntityAdapter
         );
     }
 
-    public function buildQuery(QueryBuilder $qb, array $query)
+    public function buildQuery(QueryBuilder $qb, array $query): void
     {
         if (isset($query['scripto_item_id'])) {
             $alias = $this->createAlias();
@@ -115,11 +115,11 @@ class ScriptoMediaAdapter extends AbstractEntityAdapter
         }
     }
 
-    public function validateRequest(Request $request, ErrorStore $errorStore)
+    public function validateRequest(Request $request, ErrorStore $errorStore): void
     {
     }
 
-    public function hydrate(Request $request, EntityInterface $entity, ErrorStore $errorStore)
+    public function hydrate(Request $request, EntityInterface $entity, ErrorStore $errorStore): void
     {
         $services = $this->getServiceLocator();
         $mwUser = $services->get('Scripto\Mediawiki\ApiClient')->queryUserInfo();
@@ -163,7 +163,7 @@ class ScriptoMediaAdapter extends AbstractEntityAdapter
         }
     }
 
-    public function validateEntity(EntityInterface $entity, ErrorStore $errorStore)
+    public function validateEntity(EntityInterface $entity, ErrorStore $errorStore): void
     {
         $client = $this->getServiceLocator()->get('Scripto\Mediawiki\ApiClient');
         if (null === $entity->getScriptoItem()) {

@@ -26,7 +26,7 @@ $this->scripto()->postTitle(sprintf($this->translate('Contributions by %s'), $us
             $userCon['new'] ? $this->translate('new') : null,
             $userCon['top'] ? $this->translate('current') : null,
         ]);
-        $sMedia = isset($userCon['scripto_media']) ? $userCon['scripto_media'] : null;
+        $sMedia = $userCon['scripto_media'] ?? null;
         $sItem = $sMedia ? $sMedia->scriptoItem() : null;
         $project = $sItem ? $sItem->scriptoProject() : null;
         $isTalk = (1 === $userCon['ns']);

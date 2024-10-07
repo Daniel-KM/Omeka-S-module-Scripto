@@ -1,12 +1,12 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Controller\Admin;
 
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
 use Scripto\Form\MediaBatchForm;
 use Scripto\Form\MediaForm;
 use Scripto\Form\RevisionRevertForm;
 use Scripto\Mediawiki\Exception\QueryException;
-use Laminas\Mvc\Controller\AbstractActionController;
-use Laminas\View\Model\ViewModel;
 
 class MediaController extends AbstractActionController
 {
@@ -454,7 +454,7 @@ class MediaController extends AbstractActionController
         return $view;
     }
 
-    public function watchAction()
+    public function watchAction(): void
     {
         if (!$this->getRequest()->isPost()) {
             $this->getResponse()->setStatusCode(400);

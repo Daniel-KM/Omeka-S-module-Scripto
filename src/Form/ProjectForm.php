@@ -1,14 +1,14 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Form;
 
+use Laminas\Form\Form;
 use Omeka\Form\Element\ItemSetSelect;
 use Omeka\Form\Element\PropertySelect;
 use Scripto\Form\Element\MediaTypeSelect;
-use Laminas\Form\Form;
 
 class ProjectForm extends Form
 {
-    public function init()
+    public function init(): void
     {
         $this->add([
             'name' => 'o-module-scripto:title',

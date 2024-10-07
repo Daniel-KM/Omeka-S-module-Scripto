@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Mediawiki;
 
 use DateTime;
@@ -980,7 +980,7 @@ class ApiClient
      *
      * @link https://www.mediawiki.org/wiki/API:Logout
      */
-    public function logout()
+    public function logout(): void
     {
         $query = $this->request([
             'action' => 'query',

@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Service\ControllerPlugin;
 
 use Interop\Container\ContainerInterface;
-use Scripto\ControllerPlugin\Scripto;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Scripto\ControllerPlugin\Scripto;
 
 class ScriptoFactory implements FactoryInterface
 {

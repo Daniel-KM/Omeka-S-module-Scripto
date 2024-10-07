@@ -1,13 +1,13 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\ViewHelper;
 
-use Scripto\Form\ScriptoLoginForm;
-use Scripto\Form\ScriptoLogoutForm;
-use Scripto\Mediawiki\ApiClient;
 use Laminas\Form\Element;
 use Laminas\Router\Http\RouteMatch;
 use Laminas\ServiceManager\ServiceLocatorInterface;
 use Laminas\View\Helper\AbstractHelper;
+use Scripto\Form\ScriptoLoginForm;
+use Scripto\Form\ScriptoLogoutForm;
+use Scripto\Mediawiki\ApiClient;
 
 /**
  * View helper used to render Scripto template elements.
@@ -86,7 +86,7 @@ class Scripto extends AbstractHelper
     /**
      * Prepare the site context of the public application.
      */
-    public function prepareSiteContext()
+    public function prepareSiteContext(): void
     {
         $view = $this->getView();
         $siteSlug = $this->routeMatch->getParam('site-slug');

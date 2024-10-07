@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Job;
 
 use DateTime;
@@ -11,7 +11,7 @@ use Scripto\Entity\ScriptoProject;
  */
 class ImportProject extends ScriptoJob
 {
-    public function perform()
+    public function perform(): void
     {
         $em = $this->getServiceLocator()->get('Omeka\EntityManager');
         $project = $em->find('Scripto\Entity\ScriptoProject', $this->getArg('scripto_project_id'));
@@ -29,7 +29,7 @@ class ImportProject extends ScriptoJob
      *
      * @param ScriptoProject $project
      */
-    public function importProject(ScriptoProject $project)
+    public function importProject(ScriptoProject $project): void
     {
         if (!$project->getProperty()) {
             throw new Exception\RuntimeException('Cannot import a project without a property.'); // @translate

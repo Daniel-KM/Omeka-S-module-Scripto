@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Service\Controller\Admin;
 
 use Interop\Container\ContainerInterface;
-use Scripto\Controller\Admin\IndexController;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Scripto\Controller\Admin\IndexController;
 
 class IndexControllerFactory implements FactoryInterface
 {

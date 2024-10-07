@@ -1,6 +1,6 @@
 <?php 
 $this->headLink()->appendStylesheet($this->assetUrl('css/admin.css', 'Scripto'));
-$this->htmlElement('body')->appendAttribute('class', 'scripto revision compare no-actions'); 
+$this->htmlElement('body')->appendAttribute('class', 'scripto revision compare no-actions');
 ?>
 
 <?php echo $this->pageTitle($media->displayTitle(), 1, $this->scripto()->translate($project->mediaType(), 'Scripto: Media'), $this->translate('Compare revisions')); ?>

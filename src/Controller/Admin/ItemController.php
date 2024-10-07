@@ -1,12 +1,12 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Controller\Admin;
 
-use Omeka\Stdlib\Message;
-use Scripto\Form\ProjectImportForm;
-use Scripto\Form\ProjectUnimportForm;
-use Scripto\Form\ProjectSyncForm;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
+use Omeka\Stdlib\Message;
+use Scripto\Form\ProjectImportForm;
+use Scripto\Form\ProjectSyncForm;
+use Scripto\Form\ProjectUnimportForm;
 
 class ItemController extends AbstractActionController
 {

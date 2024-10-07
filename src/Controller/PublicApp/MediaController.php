@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Controller\PublicApp;
 
-use Scripto\Form\MediaPublicAppForm;
-use Laminas\View\Model\ViewModel;
 use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+use Scripto\Form\MediaPublicAppForm;
 
 class MediaController extends AbstractActionController
 {
@@ -58,7 +58,7 @@ class MediaController extends AbstractActionController
         return $this->handleEdit(1);
     }
 
-    public function watchAction()
+    public function watchAction(): void
     {
         if (!$this->getRequest()->isPost()) {
             $this->getResponse()->setStatusCode(400);

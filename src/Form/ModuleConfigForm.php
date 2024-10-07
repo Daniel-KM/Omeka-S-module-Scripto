@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Form;
 
-use Scripto\Mediawiki\ApiClient;
 use Laminas\Form\Form;
 use Laminas\Http\Client as HttpClient;
 use Laminas\Validator\Callback;
+use Scripto\Mediawiki\ApiClient;
 
 class ModuleConfigForm extends Form
 {
@@ -18,7 +18,7 @@ class ModuleConfigForm extends Form
      */
     protected $timeZone;
 
-    public function init()
+    public function init(): void
     {
         $this->add([
             'type' => 'text',
@@ -94,7 +94,7 @@ class ModuleConfigForm extends Form
      * @param HttpClient $httpClient
      * @param string $timeZone
      */
-    public function setApiClientDependencies(HttpClient $httpClient, $timeZone)
+    public function setApiClientDependencies(HttpClient $httpClient, $timeZone): void
     {
         $this->httpClient = $httpClient;
         $this->timeZone = $timeZone;

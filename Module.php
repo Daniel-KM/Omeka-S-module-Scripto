@@ -1,13 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto;
 
 use Composer\Semver\Comparator;
 use DateTime;
-use Omeka\Module\AbstractModule;
-use Omeka\Mvc\Exception\RuntimeException as MvcRuntimeException;
-use Scripto\PermissionsAssertion\ProjectIsPublicAssertion;
-use Scripto\PermissionsAssertion\UserCanReviewAssertion;
-use Scripto\PermissionsAssertion\UserOwnsProjectAssertion;
 use Laminas\EventManager\Event;
 use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\Mvc\Controller\AbstractController;
@@ -15,6 +10,11 @@ use Laminas\Mvc\MvcEvent;
 use Laminas\Permissions\Acl\Assertion\AssertionAggregate;
 use Laminas\ServiceManager\ServiceLocatorInterface;
 use Laminas\View\Renderer\PhpRenderer;
+use Omeka\Module\AbstractModule;
+use Omeka\Mvc\Exception\RuntimeException as MvcRuntimeException;
+use Scripto\PermissionsAssertion\ProjectIsPublicAssertion;
+use Scripto\PermissionsAssertion\UserCanReviewAssertion;
+use Scripto\PermissionsAssertion\UserOwnsProjectAssertion;
 
 class Module extends AbstractModule
 {
@@ -28,7 +28,7 @@ class Module extends AbstractModule
         return include __DIR__ . '/config/module.config.php';
     }
 
-    public function onBootstrap(MvcEvent $event)
+    public function onBootstrap(MvcEvent $event): void
     {
         parent::onBootstrap($event);
         $this->addAclRules();
@@ -40,7 +40,7 @@ class Module extends AbstractModule
         $filter->addRelatedEntity('Scripto\Entity\ScriptoMedia', 'media_id');
     }
 
-    public function install(ServiceLocatorInterface $services)
+    public function install(ServiceLocatorInterface $services): void
     {
         $conn = $services->get('Omeka\Connection');
         $conn->exec('SET FOREIGN_KEY_CHECKS=0;');
@@ -84,7 +84,7 @@ class Module extends AbstractModule
         }
     }
 
-    public function upgrade($oldVersion, $newVersion, ServiceLocatorInterface $services)
+    public function upgrade($oldVersion, $newVersion, ServiceLocatorInterface $services): void
     {
         $conn = $services->get('Omeka\Connection');
         if (Comparator::lessThan($oldVersion, '0.1.0-alpha2')) {
@@ -104,7 +104,7 @@ class Module extends AbstractModule
         }
     }
 
-    public function uninstall(ServiceLocatorInterface $services)
+    public function uninstall(ServiceLocatorInterface $services): void
     {
         $conn = $services->get('Omeka\Connection');
         $conn->exec('SET FOREIGN_KEY_CHECKS=0;');
@@ -146,13 +146,13 @@ class Module extends AbstractModule
         return false;
     }
 
-    public function attachListeners(SharedEventManagerInterface $sharedEventManager)
+    public function attachListeners(SharedEventManagerInterface $sharedEventManager): void
     {
         // Add the Scripto term definition.
         $sharedEventManager->attach(
             '*',
             'api.context',
-            function (Event $event) {
+            function (Event $event): void {
                 $context = $event->getParam('context');
                 $context['o-module-scripto'] = 'http://omeka.org/s/vocabs/module/scripto#';
                 $event->setParam('context', $context);
@@ -162,7 +162,7 @@ class Module extends AbstractModule
         $sharedEventManager->attach(
             'Omeka\Controller\Admin\Item',
             'view.show.section_nav',
-            function (Event $event) {
+            function (Event $event): void {
                 $itemId = $event->getParam('resource')->id();
                 $sItems = $this->getImportedScriptoItems($itemId);
                 if ($sItems) {
@@ -186,7 +186,7 @@ class Module extends AbstractModule
         $sharedEventManager->attach(
             'Omeka\Controller\Admin\Media',
             'view.show.section_nav',
-            function (Event $event) {
+            function (Event $event): void {
                 $mediaId = $event->getParam('resource')->id();
                 $sMedias = $this->getImportedScriptoMedia($mediaId);
                 if ($sMedias) {
@@ -210,7 +210,7 @@ class Module extends AbstractModule
         $sharedEventManager->attach(
             'Omeka\Controller\Admin\Item',
             'view.show.after',
-            function (Event $event) {
+            function (Event $event): void {
                 $item = $event->getTarget()->item;
                 $sItems = $this->getImportedScriptoItems($item->id());
                 if ($sItems) {
@@ -228,7 +228,7 @@ class Module extends AbstractModule
         $sharedEventManager->attach(
             'Omeka\Controller\Admin\Media',
             'view.show.after',
-            function (Event $event) {
+            function (Event $event): void {
                 $media = $event->getTarget()->media;
                 $sMedias = $this->getImportedScriptoMedia($media->id());
                 if ($sMedias) {
@@ -282,7 +282,7 @@ class Module extends AbstractModule
         $sharedEventManager->attach(
             '*',
             'copy_resources.sites.post',
-            function (Event $event) {
+            function (Event $event): void {
                 $copyResources = $event->getParam('copy_resources');
                 $siteCopy = $event->getParam('resource_copy');
 
@@ -295,7 +295,7 @@ class Module extends AbstractModule
     /**
      * Add ACL rules for this module.
      */
-    protected function addAclRules()
+    protected function addAclRules(): void
     {
         $acl = $this->getServiceLocator()->get('Omeka\Acl');
 
@@ -402,7 +402,7 @@ class Module extends AbstractModule
      *
      * @param Event $event
      */
-    public function setPublicAppLayout(Event $event)
+    public function setPublicAppLayout(Event $event): void
     {
         $routeName = $event->getRouteMatch()->getMatchedRouteName();
         if (0 !== strpos($routeName, 'scripto')) {
@@ -419,7 +419,7 @@ class Module extends AbstractModule
      *
      * @param Event $event
      */
-    public function checkMediawikiApiUrl(Event $event)
+    public function checkMediawikiApiUrl(Event $event): void
     {
         $services = $this->getServiceLocator();
         $routeName = $event->getRouteMatch()->getMatchedRouteName();
@@ -447,7 +447,7 @@ class Module extends AbstractModule
      *
      * @param Event $event
      */
-    public function editMediawikiPage(Event $event)
+    public function editMediawikiPage(Event $event): void
     {
         $sMedia = $event->getParam('entity');
 
@@ -513,7 +513,7 @@ class Module extends AbstractModule
      *
      * @param Event $event
      */
-    public function filterProjects(Event $event)
+    public function filterProjects(Event $event): void
     {
         $qb = $event->getParam('queryBuilder');
 
@@ -554,7 +554,7 @@ class Module extends AbstractModule
      *
      * Event $event
      */
-    public function filterItemJsonLd(Event $event)
+    public function filterItemJsonLd(Event $event): void
     {
         $jsonLd = $event->getParam('jsonLd');
         $sItems = $this->getImportedScriptoItems($event->getTarget()->id());
@@ -574,7 +574,7 @@ class Module extends AbstractModule
      *
      * Event $event
      */
-    public function filterMediaJsonLd(Event $event)
+    public function filterMediaJsonLd(Event $event): void
     {
         $jsonLd = $event->getParam('jsonLd');
         $sMedias = $this->getImportedScriptoMedia($event->getTarget()->id());

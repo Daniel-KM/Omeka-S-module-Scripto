@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Service\Controller\Admin;
 
 use Interop\Container\ContainerInterface;
-use Scripto\Controller\Admin\ProjectController;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Scripto\Controller\Admin\ProjectController;
 
 class ProjectControllerFactory implements FactoryInterface
 {

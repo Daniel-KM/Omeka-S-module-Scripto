@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Service\Form;
 
-use Scripto\Form\ModuleConfigForm;
-use Laminas\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Scripto\Form\ModuleConfigForm;
 
 class ModuleConfigFormFactory implements FactoryInterface
 {

@@ -1,14 +1,14 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Site\BlockLayout;
 
-use Omeka\Api\Representation\SiteRepresentation;
-use Omeka\Api\Representation\SitePageRepresentation;
+use Laminas\View\Renderer\PhpRenderer;
+use Omeka\Api\Exception\NotFoundException;
 use Omeka\Api\Representation\SitePageBlockRepresentation;
+use Omeka\Api\Representation\SitePageRepresentation;
+use Omeka\Api\Representation\SiteRepresentation;
 use Omeka\Entity\SitePageBlock;
 use Omeka\Site\BlockLayout\AbstractBlockLayout;
 use Omeka\Stdlib\ErrorStore;
-use Omeka\Api\Exception\NotFoundException;
-use Laminas\View\Renderer\PhpRenderer;
 
 class Scripto extends AbstractBlockLayout
 {
@@ -17,7 +17,7 @@ class Scripto extends AbstractBlockLayout
         return 'Scripto'; // @translate
     }
 
-    public function onHydrate(SitePageBlock $block, ErrorStore $errorStore)
+    public function onHydrate(SitePageBlock $block, ErrorStore $errorStore): void
     {
     }
 

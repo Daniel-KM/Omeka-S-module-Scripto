@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Entity;
 
 use DateTime;
@@ -72,7 +72,7 @@ class ScriptoItem extends AbstractEntity
         return $this->id;
     }
 
-    public function setScriptoProject(ScriptoProject $scriptoProject)
+    public function setScriptoProject(ScriptoProject $scriptoProject): void
     {
         $this->scriptoProject = $scriptoProject;
     }
@@ -82,7 +82,7 @@ class ScriptoItem extends AbstractEntity
         return $this->scriptoProject;
     }
 
-    public function setItem(Item $item)
+    public function setItem(Item $item): void
     {
         $this->item = $item;
     }
@@ -92,7 +92,7 @@ class ScriptoItem extends AbstractEntity
         return $this->item;
     }
 
-    public function setSynced(DateTime $dateTime)
+    public function setSynced(DateTime $dateTime): void
     {
         $this->synced = $dateTime;
     }
@@ -102,7 +102,7 @@ class ScriptoItem extends AbstractEntity
         return $this->synced;
     }
 
-    public function setEdited(DateTime $dateTime)
+    public function setEdited(DateTime $dateTime): void
     {
         $this->edited = $dateTime;
     }
@@ -120,7 +120,7 @@ class ScriptoItem extends AbstractEntity
     /**
      * @PrePersist
      */
-    public function prePersist(LifecycleEventArgs $eventArgs)
+    public function prePersist(LifecycleEventArgs $eventArgs): void
     {
         $this->setSynced(new DateTime('now'));
     }

@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Service\Mediawiki;
 
 use Interop\Container\ContainerInterface;
-use Scripto\Mediawiki\ApiClient;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Scripto\Mediawiki\ApiClient;
 
 class ApiClientFactory implements FactoryInterface
 {

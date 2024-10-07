@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Job;
 
 use DateTime;
@@ -15,7 +15,7 @@ use Scripto\Entity\ScriptoProject;
  */
 class SyncProject extends ScriptoJob
 {
-    public function perform()
+    public function perform(): void
     {
         $em = $this->getServiceLocator()->get('Omeka\EntityManager');
         $project = $em->find('Scripto\Entity\ScriptoProject', $this->getArg('scripto_project_id'));
@@ -27,7 +27,7 @@ class SyncProject extends ScriptoJob
      *
      * @param ScriptoProject $project
      */
-    public function syncProject(ScriptoProject $project)
+    public function syncProject(ScriptoProject $project): void
     {
         if (!$project->getItemSet()) {
             throw new Exception\RuntimeException('Cannot sync a project without an item set.'); // @translate
@@ -51,7 +51,7 @@ class SyncProject extends ScriptoJob
      *
      * @param ScriptoProject $project
      */
-    public function syncProjectItems(ScriptoProject $project)
+    public function syncProjectItems(ScriptoProject $project): void
     {
         $em = $this->getServiceLocator()->get('Omeka\EntityManager');
 
@@ -99,7 +99,7 @@ class SyncProject extends ScriptoJob
      *
      * @param ScriptoProject $project
      */
-    public function syncProjectMedia(ScriptoProject $project)
+    public function syncProjectMedia(ScriptoProject $project): void
     {
         /** @var \Doctrine\ORM\EntityManager $em */
         $em = $this->getServiceLocator()->get('Omeka\EntityManager');

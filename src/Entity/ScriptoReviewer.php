@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Entity;
 
 use DateTime;
@@ -54,7 +54,7 @@ class ScriptoReviewer extends AbstractEntity
         return $this->id;
     }
 
-    public function setUser(User $user = null)
+    public function setUser(User $user = null): void
     {
         $this->user = $user;
     }
@@ -64,7 +64,7 @@ class ScriptoReviewer extends AbstractEntity
         return $this->user;
     }
 
-    public function setScriptoProject(ScriptoProject $scriptoProject)
+    public function setScriptoProject(ScriptoProject $scriptoProject): void
     {
         $this->scriptoProject = $scriptoProject;
     }
@@ -74,7 +74,7 @@ class ScriptoReviewer extends AbstractEntity
         return $this->scriptoProject;
     }
 
-    public function setCreated(DateTime $dateTime)
+    public function setCreated(DateTime $dateTime): void
     {
         $this->created = $dateTime;
     }
@@ -87,7 +87,7 @@ class ScriptoReviewer extends AbstractEntity
     /**
      * @PrePersist
      */
-    public function prePersist(LifecycleEventArgs $eventArgs)
+    public function prePersist(LifecycleEventArgs $eventArgs): void
     {
         $this->setCreated(new DateTime('now'));
     }

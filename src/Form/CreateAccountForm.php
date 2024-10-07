@@ -1,11 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 namespace Scripto\Form;
 
 use Laminas\Form\Form;
 
 class CreateAccountForm extends Form
 {
-    public function init()
+    public function init(): void
     {
         $this->add([
             'type' => 'text',
