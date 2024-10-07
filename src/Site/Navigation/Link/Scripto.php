@@ -19,10 +19,6 @@ class Scripto implements LinkInterface
 
     public function isValid(array $data, ErrorStore $errorStore)
     {
-        if (!isset($data['label']) || '' === trim($data['label'])) {
-            $errorStore->addError('o:navigation', 'Invalid navigation: Scripto link missing label');
-            return false;
-        }
         if (!isset($data['project_id']) || '' === trim($data['project_id'])) {
             $errorStore->addError('o:navigation', 'Invalid navigation: Scripto link missing project');
             return false;
@@ -32,11 +28,24 @@ class Scripto implements LinkInterface
 
     public function getLabel(array $data, SiteRepresentation $site)
     {
-        $label = null;
         if (isset($data['label']) && '' !== trim($data['label'])) {
-            $label = $data['label'];
+            return $data['label'];
         }
-        return $label;
+
+        $services = $site->getServiceLocator();
+        if (empty($data['project_id']) || !is_numeric($data['project_id'])) {
+            $translator = $services->get('MvcTranslator');
+            return $translator->translate('[Missing project]'); // @translate
+        }
+
+        try {
+            /** @var \Scripto\Api\Representation\ScriptoProjectRepresentation $project */
+            $project = $services->get('Omeka\ApiManager')->read('scripto_projects', ['id' => $data['project_id']])->getContent();
+            return $project->title();
+        } catch (\Exception $e) {
+            $translator = $services->get('MvcTranslator');
+            return $translator->translate('[Missing project]'); // @translate
+        }
     }
 
     public function toZend(array $data, SiteRepresentation $site)

@@ -8,9 +8,9 @@ $select->setAttributes(['data-name' => 'project_id']);
     <?php echo $this->translate('Type'); ?>
     <input type="text" value="<?php echo $this->escapeHtml($this->translate($link->getName())); ?>" disabled>
 </label>
-<label class="required">
+<label>
     <?php echo $this->translate('Label'); ?>
-    <input type="text" data-name="label" value="<?php echo $this->escapeHtml($label); ?>" required>
+    <input type="text" data-name="label" value="<?php echo $this->escapeHtml($label); ?>">
 </label>
 <label class="required">
     <?php echo $this->translate('Project'); ?>
