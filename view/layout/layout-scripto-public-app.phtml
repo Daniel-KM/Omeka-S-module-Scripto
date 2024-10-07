@@ -1,10 +1,12 @@
 <?php
 /**
  * @var \Zend\View\Renderer\PhpRenderer $this
- * @var \Omeka\Api\Representation\SiteRepresentation $site NO
+ * @var \Omeka\Api\Representation\SiteRepresentation $site NO // FIXME $site for scripto layout.
  */
 
-if (empty($site)) $site = $this->api()->searchOne('sites', ['slug' => $this->params()->fromRoute('site-slug') ?: 'transcription'])->getContent();
+if (empty($site)) $site = $this->api()->searchOne('sites', ['slug' => $this->params()->fromRoute('site-slug') ?: 'transcription'])->getContent() ?: $this->api()->read('sites', ['id' => $this->setting('default_site')])->getContent();
+$scriptoSiteProjectId = $this->params()->fromRoute('site-project-id') ?: 1;
+$scriptoProjectId = $this->params()->fromRoute('project-id') ?: 1;
 
 $plugins = $this->getHelperPluginManager();
 $translate = $plugins->get('translate');
@@ -22,7 +24,7 @@ $hasFeed = $module && $module->getState() === \Omeka\Module\Manager::STATE_ACTIV
 
 $isHomePage = false;
 $isItemSetBrowsePage = false;
-$isTranscription = true;
+$isScripto = true;
 $isHomeTranscription = false;
 
 $collectionsURL = $url('site/resource', ['site-slug' => 'patrimoine', 'controller' => 'item-set', 'action' => 'browse'], true);
@@ -31,39 +33,43 @@ $colloquesURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => '
 $publicationsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'publications'], true);
 $bibliographieURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'bibliographie'], true);
 $aProposURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'a-propos'], true);
-$siteURL = $url('site/page', ['page-slug' => 'accueil'], true);
+$siteURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'accueil'], true);
 
 $contactURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'contact'], true);
 $planURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'plan-du-site'], true);
 $mentionsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'mentions-legales'], true);
 $confidentialiteURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'politique-de-confidentialite'], true);
 
-$siteURL = $url('site/page', ['page-slug' => 'accueil'], true);
-$transcrireURL = '/scripto/s/transcription/1/1/item';
-$projetURL = $url('site/page', ['site-slug' => 'transcription', 'page-slug' => 'projet'], true);
-$consignesURL = '/scripto/s/transcription/1/1/guidelines';
-$creerCompteURL = '/scripto/s/transcription/1/create-account';
-$contactURL2 = $url('site/page', ['site-slug' => 'transcription', 'page-slug' => 'contact'], true);
+$siteURL = $url('site/page', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'page-slug' => 'accueil'], true);
+$transcrireURL = $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'item'], true);
+$projetURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'projet'], true);
+$consignesURL = $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'guidelines'], true);
+$creerCompteURL = $url('scripto', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'action' => 'create-account'], true);
+$contactURL2 = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'contact'], true);
 
 $this->scripto()->prepareSiteContext();
 $title = $this->scripto()->publicAppTitle();
 
-$this->headMeta()->setCharset('utf-8');
-$this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1');
+$this->headMeta()
+    ->setCharset('utf-8')
+    ->appendName('viewport', 'width=device-width, initial-scale=1');
 $this->headTitle($title);
 
-$this->headLink()->prependStylesheet('//fonts.googleapis.com/css?family=Lato|Montserrat|Noto+Serif|Quicksand|Source+Code+Pro');
-$this->headLink()->appendStylesheet($this->assetUrl('css/iconfonts.css', 'Omeka'));
-$this->headLink()->appendStylesheet($this->assetUrl('vendor/tablesaw/tablesaw.stackonly.css', 'Omeka'));
-$this->headLink()->appendStylesheet($this->scripto()->publicAppStylesheet());
+$this->headLink()
+    ->prependStylesheet('//fonts.googleapis.com/css?family=Lato|Montserrat|Noto+Serif|Quicksand|Source+Code+Pro')
+    ->appendStylesheet($assetUrl('css/iconfonts.css', 'Omeka'))
+    ->appendStylesheet($assetUrl('vendor/tablesaw/tablesaw.stackonly.css', 'Omeka'))
+    ->appendStylesheet($this->scripto()->publicAppStylesheet());
 
-$this->headScript()->prependFile($this->assetUrl('vendor/jquery/jquery.min.js', 'Omeka'));
-$this->headScript()->prependFile('https://collections.maison-salins.fr/themes/salins/asset/js/top.js', 'text/javascript', ['defer' => 'defer']);
-$this->headScript()->prependFile('https://collections.maison-salins.fr/themes/salins/asset/js/scripts.js', 'text/javascript', ['defer' => 'defer']);
+$this->headScript()
+    ->prependFile($assetUrl('vendor/jquery/jquery.min.js', 'Omeka'))
+    // FIXME Asset url theme Salins.
+    ->prependFile('https://collections.maison-salins.fr/themes/salins/asset/js/top.js', 'text/javascript', ['defer' => 'defer'])
+    ->prependFile('https://collections.maison-salins.fr/themes/salins/asset/js/scripts.js', 'text/javascript', ['defer' => 'defer'])
 
-$this->headScript()->appendFile($this->assetUrl('vendor/tablesaw/tablesaw.stackonly.jquery.js', 'Omeka'));
-$this->headScript()->appendFile($this->assetUrl('js/scripto.js', 'Scripto'));
-$this->headScript()->appendFile($this->assetUrl('js/public-app.js', 'Scripto'));
+    ->appendFile($assetUrl('vendor/tablesaw/tablesaw.stackonly.jquery.js', 'Omeka'))
+    ->appendFile($assetUrl('js/scripto.js', 'Scripto'))
+    ->appendFile($assetUrl('js/public-app.js', 'Scripto'));
 
 $user = $this->identity();
 
@@ -109,7 +115,7 @@ $user = $this->identity();
                         <a href="<?= $expositionsURL ?>">Expositions</a>
                     </li>
                     <li class="with-submenu">
-                        <a class="is-sub-menu" href="#">Ressources</a>
+                        <a href="#">Ressources</a>
                         <div class="submenu">
                             <div class="menu-items">
                                 <ul>
@@ -126,7 +132,7 @@ $user = $this->identity();
                     <li><a href="<?= $transcrireURL ?>">Transcrire les collections</a></li>
                     <li><?php /* le css fonctionne pour le 3e item */ ?></li>
                     <li class="with-submenu">
-                        <a class="is-sub-menu" href="#">À propos</a>
+                        <a href="#">À propos</a>
                         <div class="submenu">
                             <div class="menu-items">
                                 <ul>
@@ -143,12 +149,13 @@ $user = $this->identity();
                     <?php if ($this->scripto()->apiClient()->userIsLoggedIn()):
                     // @see \Scripto\View\Helper\Scripto::logiinBar()
                     $userInfo = $this->scripto()->apiClient()->queryUserInfo();
+                    $urlLogout = $url('scripto', ['action' => 'logout'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]);
                     /** @var \Scripto\Form\ScriptoLogoutForm $wikiLogoutForm */
                     $wikiLogoutForm = $site->getServiceLocator()->get('FormElementManager')->get(\Scripto\Form\ScriptoLogoutForm::class);
-                    $wikiLogoutForm->setAttribute('action', $url('scripto', ['action' => 'logout'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]));
+                    $wikiLogoutForm->setAttribute('action', $urlLogout);
                     ?>
                     <li class="with-submenu">
-                        <a class="is-sub-menu" href="#"><?= $userInfo['name'] ?></a>
+                        <a href="#"><?= $userInfo['name'] ?></a>
                         <div class="submenu">
                             <div class="menu-items">
                                 <ul>
@@ -163,36 +170,23 @@ $user = $this->identity();
                     <?php endif; ?>
                 </ul>
                 <ul class="header-controls">
-                    <li class="user <?= $user ? 'logged' : ($isTranscription ? 'logged-out' : 'login') ?>">
+                    <li class="user <?= $this->scripto()->apiClient()->userIsLoggedIn() ? 'logged' : 'login' ?>">
                         <?php
-                            if ($this->scripto()->apiClient()->userIsLoggedIn()):
-                                $urlLogged = $url('scripto', ['action' => 'index'], true);
+                        if ($this->scripto()->apiClient()->userIsLoggedIn()):
+                            $userInfo = $this->scripto()->apiClient()->queryUserInfo();
+                            $urlLogged = $url('scripto', ['action' => 'index'], true);
+                        ?>
+                        <a href="<?= $urlLogged ?>">
+                            <span><?= $escape($userInfo['name']) ?></span>
+                        </a>
+                        <?php else: ?>
+                            <?php
+                            $urlLogin = $url('scripto', ['action' => 'login'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]);
                             ?>
-                            <a href="<?= $urlLogged ?>">
-                                <span><?= $escape($user->getName()) ?></span>
-                            </a>
-                            <?php else: ?>
-
-                    <?php
-                    $userInfo = $this->scripto()->apiClient()->queryUserInfo();
-                    /** @var \Scripto\Form\ScriptoLoginForm $wikiLoginForm */
-                    $wikiLoginForm = $site->getServiceLocator()->get('FormElementManager')->get(\Scripto\Form\ScriptoLoginForm::class);
-                    $wikiLoginForm->setAttribute('action', $url('scripto', ['action' => 'login'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]));
-
-                    echo sprintf(
-                        '<style>.user.logged-out, .user.logged-out a {  text-decoration: none; } </style>' .
-                        '<div class="user logged-out"><a href="#" class="user-toggle page-link menu-toggle">%s</a><div class="user-menu">%s</div></div>',
-                        '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ', // $this->translate('Log in')
-                        $this->form($wikiLoginForm)
-                    );
-                    /*
-                    ?>
-                    <a href="<?= $urlLogin ?>" >
-                    <span>Identifiez-vous</span>
-                    </a>
-                    <?php
-                    */
-                            endif; ?>
+                        <a href="<?= $urlLogin ?>" >
+                            <span>Identifiez-vous</span>
+                        </a>
+                        <?php endif; ?>
                     </li>
                     <?php if ($hasFeed): ?>
                         <li class="rss">
@@ -308,15 +302,17 @@ $user = $this->identity();
 
         <?php
         // $urlLogin = $hasGuest ? $url('site/guest/anonymous', ['action' => 'login'], true) : $url('login');
-        $urlLogin = '/scripto/login?redirect=/scripto/s/transcription/1/1/item';
-        /** @var \Omeka\Form\LoginForm $loginForm */
-        $loginForm = $site->getServiceLocator()->get('FormElementManager')
-           ->get(\Omeka\Form\LoginForm::class)
-           ->setAttribute('action', $urlLogin);
-       // echo $partial('common/login-form', ['form' => $loginForm]);
-       $form = $loginForm;
-       include dirname(dirname(dirname(dirname(__DIR__)))) . '/themes/salins/view/common/login-form.phtml';
-       ?>
+        // echo $partial('common/login-form', ['form' => $loginForm]);
+        $urlLogin = $url('scripto', ['action' => 'login'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]);
+        /** @var \Scripto\Form\ScriptoLoginForm $wikiLoginForm */
+        $wikiLoginForm = $site->getServiceLocator()->get('FormElementManager')
+            ->get(\Scripto\Form\ScriptoLoginForm::class)
+            ->setAttribute('action', $urlLogin);
+        $form = $loginForm = $wikiLoginForm;
+        $isScripto = true;
+        // FIXME Partial is not working.
+        include dirname(dirname(dirname(dirname(__DIR__)))) . '/themes/salins/view/common/login-form.phtml';
+        ?>
 
         <?php if ($hasFeed): ?>
             <div class="popup popup-suscribe-rss rss">
@@ -331,8 +327,8 @@ $user = $this->identity();
                         <div class="popup-footer">
                             <a href="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>" class="rss-url" target="_blank">Consulter</a>
                             <!--
-                        <a href="#" class="clipboard-copy-btn" data-clipboard-text="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>">Copier l'URL</a>
-                        -->
+                            <a href="#" class="clipboard-copy-btn" data-clipboard-text="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>">Copier l'URL</a>
+                            -->
                             <a href="#" class="rss-close-popup outlined">Fermer</a>
                         </div>
                     </div>
