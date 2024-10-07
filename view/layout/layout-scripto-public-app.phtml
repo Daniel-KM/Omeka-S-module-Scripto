@@ -1,37 +1,228 @@
 <?php
+/**
+ * @var \Zend\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SiteRepresentation $site NO
+ */
+
+if (empty($site)) $site = $this->api()->searchOne('sites', ['slug' => $this->params()->fromRoute('site-slug') ?: 'transcription'])->getContent();
+
+$plugins = $this->getHelperPluginManager();
+$translate = $plugins->get('translate');
+$escape = $plugins->get('escapeHtml');
+$hyperlink = $plugins->get('hyperlink');
+$partial = $plugins->get('partial');
+$url = $plugins->get('url');
+$assetUrl = $plugins->get('assetUrl');
+
+$hasGuest = $plugins->has('guestWidget');
+$hasSearch = $plugins->has('searchingForm');
+// searchOne() cannot be used for modules and it is not allowed for anonymous.
+$module = $site->getServiceLocator()->get('Omeka\ModuleManager')->getModule('Feed');
+$hasFeed = $module && $module->getState() === \Omeka\Module\Manager::STATE_ACTIVE;
+
+$isHomePage = false;
+$isItemSetBrowsePage = false;
+$isTranscription = true;
+$isHomeTranscription = false;
+
+$collectionsURL = $url('site/resource', ['site-slug' => 'patrimoine', 'controller' => 'item-set', 'action' => 'browse'], true);
+$expositionsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'expositions'], true);
+$colloquesURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'colloques'], true);
+$publicationsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'publications'], true);
+$bibliographieURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'bibliographie'], true);
+$aProposURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'a-propos'], true);
+$siteURL = $url('site/page', ['page-slug' => 'accueil'], true);
+
+$contactURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'contact'], true);
+$planURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'plan-du-site'], true);
+$mentionsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'mentions-legales'], true);
+$confidentialiteURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'politique-de-confidentialite'], true);
+
+$siteURL = $url('site/page', ['page-slug' => 'accueil'], true);
+$transcrireURL = '/scripto/s/transcription/1/1/item';
+$projetURL = $url('site/page', ['site-slug' => 'transcription', 'page-slug' => 'projet'], true);
+$consignesURL = '/scripto/s/transcription/1/1/guidelines';
+$creerCompteURL = '/scripto/s/transcription/1/create-account';
+$contactURL2 = $url('site/page', ['site-slug' => 'transcription', 'page-slug' => 'contact'], true);
+
 $this->scripto()->prepareSiteContext();
 $title = $this->scripto()->publicAppTitle();
 
 $this->headMeta()->setCharset('utf-8');
 $this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1');
 $this->headTitle($title);
-$this->headLink()->prependStylesheet('//fonts.googleapis.com/css?family=Source+Code+Pro|Lato:400,400italic,700,700italic');
+
+$this->headLink()->prependStylesheet('//fonts.googleapis.com/css?family=Lato|Montserrat|Noto+Serif|Quicksand|Source+Code+Pro');
 $this->headLink()->appendStylesheet($this->assetUrl('css/iconfonts.css', 'Omeka'));
 $this->headLink()->appendStylesheet($this->assetUrl('vendor/tablesaw/tablesaw.stackonly.css', 'Omeka'));
 $this->headLink()->appendStylesheet($this->scripto()->publicAppStylesheet());
+
 $this->headScript()->prependFile($this->assetUrl('vendor/jquery/jquery.min.js', 'Omeka'));
+$this->headScript()->prependFile('https://collections.maison-salins.fr/themes/salins/asset/js/top.js', 'text/javascript', ['defer' => 'defer']);
+$this->headScript()->prependFile('https://collections.maison-salins.fr/themes/salins/asset/js/scripts.js', 'text/javascript', ['defer' => 'defer']);
+
 $this->headScript()->appendFile($this->assetUrl('vendor/tablesaw/tablesaw.stackonly.jquery.js', 'Omeka'));
 $this->headScript()->appendFile($this->assetUrl('js/scripto.js', 'Scripto'));
 $this->headScript()->appendFile($this->assetUrl('js/public-app.js', 'Scripto'));
+
+$user = $this->identity();
+
 ?>
-<?php echo $this->doctype(); ?>
-<?php echo $this->htmlElement('html')->setAttribute('lang', $this->lang()); ?>
+<?= $this->doctype() ?>
+<?= $this->htmlElement('html')->setAttribute('lang', $this->lang()) ?>
+
     <head>
-        <?php echo $this->headMeta(); ?>
-        <?php echo $this->headTitle(); ?>
-        <?php echo $this->headLink(); ?>
-        <?php echo $this->headStyle(); ?>
-        <?php echo $this->headScript(); ?>
+        <?= $this->headMeta() ?>
+        <?= $this->headTitle() ?>
+        <?= $this->headLink() ?>
+        <?= $this->headStyle() ?>
+        <?= $this->headScript() ?>
     </head>
-    <header class="site-header" role="banner">
+
+    <?= $this->htmlElement('body')->appendAttribute('class', 'full-width') ?>
+
+    <header>
+        <div class="hamburger-parent">
+            <div class="hamburger">
+                <a href="#" class="c-hamburger c-hamburger--htx">
+                    <span><?= $translate('Toggle menu') ?></span>
+                </a>
+            </div>
+        </div>
+
+        <a href="<?= $siteURL ?>" class="logo"></a>
+
+        <div class="baseline">
+            <span class="desktop">L’histoire au service<br/>de l’avenir coopératif</span>
+            <span class="mobile">Fondation Maison de Salins</span>
+        </div>
+
+        <div class="header-contents menu-closed">
+            <div class="header-menus-background"></div>
+            <div class="header-menus">
+                <ul class="header-menu">
+                <?php /*
+                    <li>
+                        <a href="<?= $collectionsURL ?>">Collections</a>
+                    </li>
+                    <li>
+                        <a href="<?= $expositionsURL ?>">Expositions</a>
+                    </li>
+                    <li class="with-submenu">
+                        <a class="is-sub-menu" href="#">Ressources</a>
+                        <div class="submenu">
+                            <div class="menu-items">
+                                <ul>
+                                    <li><a href="<?= $publicationsURL ?>">Publications</a></li>
+                                    <li><a href="<?= $bibliographieURL ?>">Bibliographie</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="<?= $menuCssSelectedForAPropos ?>">
+                        <a href="<?= $aProposURL ?>">À propos</a>
+                    </li>
+                    */ ?>
+                    <li><a href="<?= $transcrireURL ?>">Transcrire les collections</a></li>
+                    <li><?php /* le css fonctionne pour le 3e item */ ?></li>
+                    <li class="with-submenu">
+                        <a class="is-sub-menu" href="#">À propos</a>
+                        <div class="submenu">
+                            <div class="menu-items">
+                                <ul>
+                                    <li><a href="<?= $projetURL ?>">Le projet</a></li>
+                                    <li><a href="<?= $consignesURL ?>">Consignes de transcription</a></li>
+                                    <?php if (!$this->scripto()->apiClient()->userIsLoggedIn()): ?>
+                                    <li><a href="<?= $creerCompteURL ?>">Créer un compte</a></li>
+                                    <?php endif; ?>
+                                    <li><a href="<?= $contactURL2 ?>">Contact</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                    <?php if ($this->scripto()->apiClient()->userIsLoggedIn()):
+                    // @see \Scripto\View\Helper\Scripto::logiinBar()
+                    $userInfo = $this->scripto()->apiClient()->queryUserInfo();
+                    /** @var \Scripto\Form\ScriptoLogoutForm $wikiLogoutForm */
+                    $wikiLogoutForm = $site->getServiceLocator()->get('FormElementManager')->get(\Scripto\Form\ScriptoLogoutForm::class);
+                    $wikiLogoutForm->setAttribute('action', $url('scripto', ['action' => 'logout'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]));
+                    ?>
+                    <li class="with-submenu">
+                        <a class="is-sub-menu" href="#"><?= $userInfo['name'] ?></a>
+                        <div class="submenu">
+                            <div class="menu-items">
+                                <ul>
+                                    <li><?= $hyperlink($translate('Dashboard'), $url('scripto', ['action' => 'index'], true)) ?></li>
+                                    <li><?= $hyperlink($translate('Contributions'), $url('scripto-user-contributions', ['action' => 'contributions', 'user-id' => $userInfo['name']], true)) ?></li>
+                                    <li><?= $hyperlink($translate('Watchlist'), $url('scripto-user-watchlist', ['action' => 'watchlist', 'user-id' => $userInfo['name']], true)) ?></li>
+                                    <li><?= $this->form($wikiLogoutForm) ?></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </li>
+                    <?php endif; ?>
+                </ul>
+                <ul class="header-controls">
+                    <li class="user <?= $user ? 'logged' : ($isTranscription ? 'logged-out' : 'login') ?>">
+                        <?php
+                            if ($this->scripto()->apiClient()->userIsLoggedIn()):
+                                $urlLogged = $url('scripto', ['action' => 'index'], true);
+                            ?>
+                            <a href="<?= $urlLogged ?>">
+                                <span><?= $escape($user->getName()) ?></span>
+                            </a>
+                            <?php else: ?>
+
+                    <?php
+                    $userInfo = $this->scripto()->apiClient()->queryUserInfo();
+                    /** @var \Scripto\Form\ScriptoLoginForm $wikiLoginForm */
+                    $wikiLoginForm = $site->getServiceLocator()->get('FormElementManager')->get(\Scripto\Form\ScriptoLoginForm::class);
+                    $wikiLoginForm->setAttribute('action', $url('scripto', ['action' => 'login'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]));
+
+                    echo sprintf(
+                        '<style>.user.logged-out, .user.logged-out a {  text-decoration: none; } </style>' .
+                        '<div class="user logged-out"><a href="#" class="user-toggle page-link menu-toggle">%s</a><div class="user-menu">%s</div></div>',
+                        '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ', // $this->translate('Log in')
+                        $this->form($wikiLoginForm)
+                    );
+                    /*
+                    ?>
+                    <a href="<?= $urlLogin ?>" >
+                    <span>Identifiez-vous</span>
+                    </a>
+                    <?php
+                    */
+                            endif; ?>
+                    </li>
+                    <?php if ($hasFeed): ?>
+                        <li class="rss">
+                            <a href="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>">
+                                <span>Abonnez-vous au fil RSS</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </div>
+
+        <?php // Cela doit rester dans le header pour que le popup s'affiche en gardant le logo. ?>
+        <?php // TODO Permettre l'utilisation d'un div. ?>
+        <?php if ($hasSearch && ($isHomePage || $isItemSetBrowsePage)): ?>
+            <?= $this->searchingForm('search/search-form-popup') ?>
+        <?php endif; ?>
+
+    </header>
+
+    <div class="site-header" role="banner">
         <div class="wrapper">
-            <?php echo $this->hyperlink($title, $this->url('scripto', ['action' => 'index'], true), ['class' => 'site-title']); ?>
+            <?php // echo $this->hyperlink($title, $this->url('scripto', ['action' => 'index'], true), ['class' => 'site-title']); ?>
             <nav class="top-nav">
                 <input type="checkbox" id="nav-trigger" class="nav-trigger" aria-label="<?php echo $this->translate('Toggle menu'); ?>"/>
                 <label for="nav-trigger">
                     <span class="menu-icon"></span>
                 </label>
                 <div class="trigger">
+<?php /*
                     <div class="site-nav">
                         <?php echo $this->scripto()->publicAppProjectLink(); ?>
                         <?php echo $this->scripto()->publicAppSiteLink(); ?>
@@ -40,6 +231,7 @@ $this->headScript()->appendFile($this->assetUrl('js/public-app.js', 'Scripto'));
                         <?php echo $this->hyperlink($this->translate('Create account'), $this->url('scripto', ['action' => 'create-account'], true), ['class' => 'page-link']); ?>
                         <?php endif; ?>
                     </div>
+*/ ?>
                     <?php if (isset($project)): ?>
                     <div class="project-nav">
                         <h2><?php echo $project->link($project->title()); ?></h2>
@@ -61,31 +253,92 @@ $this->headScript()->appendFile($this->assetUrl('js/public-app.js', 'Scripto'));
                 </div>
             </nav>
         </div>
-    </header>
-    <body>
+    </div>
+
+        <?php if ($hasSearch && ($isHomePage || $isItemSetBrowsePage)): ?>
+            <?= $this->searchingForm('search/search-form-quick') ?>
+        <?php endif; ?>
+
         <main id="content" class="page-content" aria-label="<?php echo $this->escapeHtml($this->translate('Content')); ?>">
             <div class="wrapper">
                 <?php echo $this->messages(); ?>
                 <article class="post">
-                    <header class="post-header">
+                    <div class="post-header">
                         <?php if ($this->scripto()->postTitle()): ?>
                         <h1 class="post-title"><?php echo $this->scripto()->postTitle(); ?></h1>
                         <?php endif; ?>
                         <?php if ($this->scripto()->postSubtitle()): ?>
                         <h2 class="post-subtitle"><?php echo $this->scripto()->postSubtitle(); ?></h2>
                         <?php endif; ?>
-                    </header>
+                    </div>
                     <div class="post-content">
                         <?php echo $this->content; ?>
                     </div>
                 </article>
             </div>
         </main>
+
+        <?php /*
         <footer class="site-footer h-card">
             <div class="wrapper">
                 <h2 class="footer-heading"><?php echo $title; ?></h2>
                 <div id="back-to-top"><a href="#content"><?php echo $this->translate('Back to top'); ?></a></div>
             </div>
+        </footer> */ ?>
+
+        <footer>
+            <div class="footer-contents">
+                <ul class="footer-menu">
+                    <?php if (isset($this->ThemeSettingToLinks)) : ?>
+                        <?php foreach ($this->ThemeSettingToLinks('footer_links') as $link): ?>
+                            <li>
+                                <a href="<?= $link['url'] ?>"><?= $link['label'] ?></a>
+                            </li>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <li><a href="<?= $contactURL ?>">Contact</a></li>
+                        <li><a href="<?= $planURL ?>">Plan d'archive</a></li>
+                        <li><a href="<?= $mentionsURL ?>">Mentions légales et CGU</a></li>
+                        <li><a href="<?= $confidentialiteURL ?>">Politique de confidentialté</a></li>
+                    <?php endif ?>
+                </ul>
+                <div class="cd-top back-to-top"><a href="#"></a></div>
+            </div>
         </footer>
+
+        <?php
+        // $urlLogin = $hasGuest ? $url('site/guest/anonymous', ['action' => 'login'], true) : $url('login');
+        $urlLogin = '/scripto/login?redirect=/scripto/s/transcription/1/1/item';
+        /** @var \Omeka\Form\LoginForm $loginForm */
+        $loginForm = $site->getServiceLocator()->get('FormElementManager')
+           ->get(\Omeka\Form\LoginForm::class)
+           ->setAttribute('action', $urlLogin);
+       // echo $partial('common/login-form', ['form' => $loginForm]);
+       $form = $loginForm;
+       include dirname(dirname(dirname(dirname(__DIR__)))) . '/themes/salins/view/common/login-form.phtml';
+       ?>
+
+        <?php if ($hasFeed): ?>
+            <div class="popup popup-suscribe-rss rss">
+                <div class="popup-background">
+                    <div class="popup-panel">
+                        <div class="popup-header">
+                            <a href="#" class="popup-header-close-button"></a>
+                        </div>
+                        <div class="popup-contents">
+                            <p>Souhaitez-vous vous abonnez à notre fil RSS afin d’être tenu informé des dernières publications et actualités ?</p>
+                        </div>
+                        <div class="popup-footer">
+                            <a href="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>" class="rss-url" target="_blank">Consulter</a>
+                            <!--
+                        <a href="#" class="clipboard-copy-btn" data-clipboard-text="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>">Copier l'URL</a>
+                        -->
+                            <a href="#" class="rss-close-popup outlined">Fermer</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
     </body>
 </html>
