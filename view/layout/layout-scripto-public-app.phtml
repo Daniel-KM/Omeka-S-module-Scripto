@@ -17,6 +17,8 @@ $partial = $plugins->get('partial');
 $url = $plugins->get('url');
 $assetUrl = $plugins->get('assetUrl');
 
+$siteSlug = $site->slug();
+
 $hasGuest = $plugins->has('guestWidget');
 $hasSearch = $plugins->has('searchingForm');
 // searchOne() cannot be used for modules and it is not allowed for anonymous.
@@ -34,24 +36,24 @@ $colloquesURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => '
 $publicationsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'publications'], true);
 $bibliographieURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'bibliographie'], true);
 $aProposURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'a-propos'], true);
-$siteURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'accueil'], true);
+$siteURL = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'accueil'], true);
 
 $contactURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'contact'], true);
 $planURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'plan-du-site'], true);
 $mentionsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'mentions-legales'], true);
 $confidentialiteURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'politique-de-confidentialite'], true);
 
-$projectsURL = $url('scripto-project', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'action' => 'browse'], true);
-$siteURL = $url('site/page', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'page-slug' => 'accueil'], true);
+$projectsURL = $url('scripto-project', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'action' => 'browse'], true);
+$siteURL = $url('site/page', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'page-slug' => 'accueil'], true);
 $transcrireURL = $totalScriptoProjects <= 1
-    ? $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'item'], true)
+    ? $url('scripto-project-id', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'item'], true)
     : $projectsURL;
-$projetURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'projet'], true);
+$projetURL = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'projet'], true);
 // Les consignes sont les mêmes pour tous les projets.
-// $consignesURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'consignes-de-transcription'], true);
-$consignesURL = $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => /* $scriptoProjectId */ 1, 'action' => 'guidelines'], true);
-$creerCompteURL = $url('scripto', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'action' => 'create-account'], true);
-$contactURL2 = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'contact'], true);
+// $consignesURL = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'consignes-de-transcription'], true);
+$consignesURL = $url('scripto-project-id', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'project-id' => /* $scriptoProjectId */ 1, 'action' => 'guidelines'], true);
+$creerCompteURL = $url('scripto', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'action' => 'create-account'], true);
+$contactURL2 = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'contact'], true);
 
 $this->scripto()->prepareSiteContext();
 $title = $this->scripto()->publicAppTitle();
@@ -146,7 +148,7 @@ $user = $this->identity();
                                     <li><?= $hyperlink($translate('Tous les projets'), $projectsURL) ?></li>
                                     <?php /** @var \Scripto\Api\Representation\ScriptoProjectRepresentation $scriptoProject */ ?>
                                     <?php foreach ($this->api()->search('scripto_projects')->getContent() as $scriptoProject): ?>
-                                    <li><?= $scriptoProject->link($scriptoProject->title()) ?></li>
+                                    <li><?= $hyperlink($scriptoProject->title(), $url('scripto-project-id', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProject->id(), 'action' => 'item'], true)) ?></li>
                                     <?php endforeach; ?>
                                 </ul>
                             </div>
@@ -250,7 +252,7 @@ $user = $this->identity();
                     </div>
 <?php // ?>
                     <?php if (isset($project)): ?>
-                    <?php $consignesURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'consignes-de-transcription'], true); ?>
+                    <?php $consignesURL = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'consignes-de-transcription'], true); ?>
 
                     <div class="project-nav">
                         <h2><?php echo $project->link($project->title()); ?></h2>
