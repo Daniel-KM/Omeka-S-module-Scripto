@@ -1,5 +1,19 @@
 <?php
 $this->scripto()->postTitle($item->displayTitle());
+
+/** @var \Scripto\Api\Representation\ScriptoMediaRepresentation[] $sMedias */
+if ($sMedias):
+    $sMedias = array_filter($sMedias, function ($sMedia) {
+        $toHide = [
+            'application/pdf',
+            'application/xml',
+            'text/xml',
+            'application/vnd.pdf2xml+xml',
+        ];
+        return !in_array($sMedia->media()->mediaType(), $toHide);
+    });
+endif;
+
 ?>
 <div class="resource-content">
     <?php if ($itemMetadata = $item->displayValues()): ?>

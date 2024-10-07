@@ -116,7 +116,10 @@ if (!$project->filterApproved()) {
                 <div class="status"><span class="meta-label"><?php echo $this->translate('Status'); ?></span> <?php echo $this->translate($sItem->status()); ?></div>
                 <div class="percentage">
                     <span class="meta-label"><?php echo $this->scripto()->translate($project->mediaType(), 'Approved medias'); ?></span>
+<?php /*
                     <span class="total-approved-media"><?php echo number_format($approvedCount); ?></span> / <span class="total-media"><?php echo number_format($totalCount); ?></span>
+*/ ?>
+                    <span class="total-approved-media"><?php echo number_format($approvedPercentage); ?> %</span>
                     <div class="status-bar">
                         <div class="completion" style="width: <?php echo $approvedPercentage; ?>%"></div>
                     </div>

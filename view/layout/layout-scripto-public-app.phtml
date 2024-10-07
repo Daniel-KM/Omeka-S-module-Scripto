@@ -44,6 +44,7 @@ $siteURL = $url('site/page', ['site-slug' => $site->slug(), 'site-project-id' =>
 $transcrireURL = $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'item'], true);
 $projetURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'projet'], true);
 $consignesURL = $url('scripto-project-id', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'guidelines'], true);
+// $consignesURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'consignes-de-transcription'], true);
 $creerCompteURL = $url('scripto', ['site-slug' => $site->slug(), 'site-project-id' => $scriptoSiteProjectId, 'action' => 'create-account'], true);
 $contactURL2 = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'contact'], true);
 
@@ -207,6 +208,7 @@ $user = $this->identity();
 
     </header>
 
+<?php /*
     <div class="site-header" role="banner">
         <div class="wrapper">
             <?php // echo $this->hyperlink($title, $this->url('scripto', ['action' => 'index'], true), ['class' => 'site-title']); ?>
@@ -216,7 +218,7 @@ $user = $this->identity();
                     <span class="menu-icon"></span>
                 </label>
                 <div class="trigger">
-<?php /*
+<?php //* Sous header ?>
                     <div class="site-nav">
                         <?php echo $this->scripto()->publicAppProjectLink(); ?>
                         <?php echo $this->scripto()->publicAppSiteLink(); ?>
@@ -225,12 +227,17 @@ $user = $this->identity();
                         <?php echo $this->hyperlink($this->translate('Create account'), $this->url('scripto', ['action' => 'create-account'], true), ['class' => 'page-link']); ?>
                         <?php endif; ?>
                     </div>
-*/ ?>
+<?php // ?>
                     <?php if (isset($project)): ?>
+                    <?php $consignesURL = $url('site/page', ['site-slug' => $site->slug(), 'page-slug' => 'consignes-de-transcription'], true); ?>
+
                     <div class="project-nav">
                         <h2><?php echo $project->link($project->title()); ?></h2>
                         <ul>
                             <li><?php echo $project->link($this->translate('Project guidelines'), 'guidelines'); ?></li>
+                            <?php /*
+                            <li><?php echo $this->hyperlink($this->translate('Project guidelines'), $consignesURL); ?></li>
+                            // ?>
                             <li><?php echo $project->link($this->scripto()->translate($project->itemType(), 'Browse items')); ?></li>
                         </ul>
                         <?php
@@ -248,6 +255,7 @@ $user = $this->identity();
             </nav>
         </div>
     </div>
+*/ ?>
 
         <?php if ($hasSearch && ($isHomePage || $isItemSetBrowsePage)): ?>
             <?= $this->searchingForm('search/search-form-quick') ?>
