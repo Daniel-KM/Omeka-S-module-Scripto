@@ -8,13 +8,12 @@
  */
 
 // Il n'y a pas de site, donc pas de themeSetting, etc., donc on force le site.
+if (empty($site)) {
+    require_once dirname(__DIR__) . '/helper/theme-functions.php';
+    $site = prepareSite($this);
+}
 
-use Omeka\Service\Delegator\SitePaginatorDelegatorFactory;
-use Omeka\Site\Theme\Manager;
-use Omeka\Site\Theme\Theme;
-use Laminas\I18n\Translator\TranslatorInterface as TranslatorInterface;
-
-$defaultSiteSlug = 'transcription';
+/** @var \Scripto\ViewHelper\Scripto $scripto */
 
 $plugins = $this->getHelperPluginManager();
 $api = $plugins->get('api');
@@ -24,78 +23,13 @@ $scripto = $plugins->get('scripto');
 $setting = $plugins->get('setting');
 $params = $plugins->get('params');
 
-if (empty($site)) {
-    $services = $api->read('vocabularies', ['id' => 1])->getContent()->getServiceLocator();
-    $site = $api->searchOne('sites', ['slug' => $params->fromRoute('site-slug') ?: $defaultSiteSlug])->getContent()
-        ?: $api->read('sites', ['id' => $setting('default_site')])->getContent();
-
-    /**
-     * @see \Omeka\Mvc\MvcListeners::prepareSite()
-     * @see \Omeka\Mvc\MvcListeners::preparePublicSite()
-     */
-
-    // Inject the site into things that need it.
-    $services->get('Omeka\Settings\Site')->setTargetId($site->id());
-    $services->get('ControllerPluginManager')->get('currentSite')->setSite($site);
-    $services->get('ViewHelperManager')->get('currentSite')->setSite($site);
-
-    // Set the site to the top level view model
-    // $event->getViewModel()->site = $site;
-    $this->site = $site;
-
-    // Set the current theme for this site.
-    $themeManager = $services->get('Omeka\Site\ThemeManager');
-    $currentTheme = $themeManager->getTheme($site->theme());
-    if (!$currentTheme) {
-        $currentTheme = new Theme('not_found');
-        $currentTheme->setState(Manager::STATE_NOT_FOUND);
-    }
-    $themeManager->setCurrentTheme($currentTheme);
-
-    $hasTranslations = $currentTheme->getIni('has_translations');
-    if ($hasTranslations) {
-        $translator = $services->get(TranslatorInterface::class);
-        $translator->getDelegatedTranslator()->addTranslationFilePattern(
-            'gettext',
-            $currentTheme->getPath('language'),
-            '%s.mo'
-        );
-    }
-
-    $services->addDelegator('Omeka\Paginator', SitePaginatorDelegatorFactory::class);
-
-    // Add the theme view templates to the path stack.
-    $services->get('ViewTemplatePathStack')->addPath($currentTheme->getPath('view'));
-
-    // Load theme view helpers on-demand.
-    $helpers = $currentTheme->getIni('helpers');
-    if (is_array($helpers)) {
-        foreach ($helpers as $helper) {
-            $factory = function ($pluginManager) use ($site, $helper, $currentTheme) {
-                require_once $currentTheme->getPath('helper', "$helper.php");
-                $helperClass = sprintf('\OmekaTheme\Helper\%s', $helper);
-                return new $helperClass;
-            };
-            $services->get('ViewHelperManager')->setFactory($helper, $factory);
-        }
-    }
-
-    // Set the runtime locale and translator language to the configured site
-    // locale.
-    $locale = $services->get('Omeka\Settings\Site')->get('locale');
-    if ($locale) {
-        if (extension_loaded('intl')) {
-            \Locale::setDefault($locale);
-        }
-        $services->get('MvcTranslator')->getDelegatedTranslator()->setLocale($locale);
-    }
-}
-
+/*
 // Check if the route is outside of the site (module Guest) to theme them.
 if (!$user && !empty($params->fromRoute('outside'))) {
     echo $partial('layout-outside');
     return;
 }
+*/
 
 $scriptoSiteProjectId = (int) ($params->fromRoute('site-project-id') ?: 1);
 $scriptoProjectId = (int) ($params->fromRoute('project-id') ?: 1);
@@ -172,7 +106,7 @@ $headScript
     ->appendFile($assetUrl('vendor/clipboard/clipboard.min.js'), 'text/javascript', ['defer' => 'defer'])
 ;
 
-if ($hasMapping) {
+if (false && $hasMapping) {
     // Cf. Mapping view/mapping/site/index/browse, view/mapping/index/show et view/mapping/index/advanced search.
     $headLink
         ->appendStylesheet($assetUrl('node_modules/leaflet/dist/leaflet.css', 'Mapping'))
@@ -219,16 +153,16 @@ if ($hasSelection) {
         ->appendFile($assetUrl('js/selection.js', 'Selection'), 'text/javascript', ['defer' => 'defer']);
 }
 
-if ($isHomeScripto) {
+// if ($isHomeScripto) {
     $headLink
         ->appendStylesheet($assetUrl('vendor/tablesaw/tablesaw.stackonly.css', 'Omeka'))
         ->appendStylesheet($scripto->publicAppStylesheet());
 
     $headScript
-        ->appendFile($assetUrl('vendor/tablesaw/tablesaw.stackonly.jquery.js', 'Omeka'), 'text/javascript', ['defer' => 'defer'])
-        ->appendFile($assetUrl('js/scripto.js', 'Scripto'), 'text/javascript', ['defer' => 'defer'])
-        ->appendFile($assetUrl('js/public-app.js', 'Scripto'), 'text/javascript', ['defer' => 'defer']);
-}
+        ->appendFile($assetUrl('vendor/tablesaw/tablesaw.stackonly.jquery.js', 'Omeka'))
+        ->appendFile($assetUrl('js/scripto.js', 'Scripto'))
+        ->appendFile($assetUrl('js/public-app.js', 'Scripto'));
+// }
 
 if ($hasGuest && !$user) {
     $headLink
@@ -260,9 +194,8 @@ $this->trigger('view.layout');
         <?= $this->headLink() ?>
         <?= $this->headStyle() ?>
         <?= $headScript() ?>
-
+        <?php if (!$scripto && $accentColor = $themeSetting('accent_color')): ?>
         <style>
-            <?php if ($accentColor = $themeSetting('accent_color')): ?>
             a:link,
             a:visited {
                 color: <?= $accentColor ?>
@@ -272,8 +205,8 @@ $this->trigger('view.layout');
                 color: <?= $accentColor ?>;
                 opacity: .75;
             }
-            <?php endif; ?>
         </style>
+        <?php endif; ?>
     </head>
 
     <?= $this->htmlElement('body')->appendAttribute('class', 'full-width transcription') ?>
@@ -301,30 +234,36 @@ $this->trigger('view.layout');
                     <div class="header-menus-background"></div>
                     <div class="header-menus">
                         <nav class="menu-main">
-                        <?php if ($isScripto): ?>
-                        <?php // TODO Menu à déplacer en admin. ?>
-                        <?php require __DIR__ . '/menu.scripto.phtml'; ?>
-                        <?php else: ?>
-                        <?php // Menu standard.
-
-                            // Supprimer le sous-menu pour les expositions et les histoires
+                            <?php
                             $menu = $site->publicNav()->menu();
                             $menuContainer = $menu->getContainer();
-                            foreach (['Expositions', 'Histoires'] as $navPageLabel) {
-                                $navPage =$menuContainer->findOneBy('label', $navPageLabel);
-                                if ($navPage) {
-                                    $navPage->setClass(trim($navPage->getClass() . ' skip-submenu'));
-                                    // Suppression du sous-menu, tout en gardant le statut actif.
-                                    if ($navPage->isActive(true)) {
-                                        $navPage->setActive(true);
+
+                            // Supprimer le sous-menu pour les expositions et les histoires.
+                            // TODO Vérifier si cette vérification est toujours utile.
+                            if ($isScripto) {
+                                // Supprimer le lien Créer un compte si connecté.
+                                // Attention : le compte scripto est séparé du compte omeka.
+                                if ($scripto->apiClient()->userIsLoggedIn()) {
+                                    $navPage = $menuContainer->findOneBy('label', 'Créer un compte');
+                                    $menuContainer->removePage($navPage, true);
+                                }
+                            } else {
+                                foreach (['Expositions', 'Histoires'] as $navPageLabel) {
+                                    $navPage =$menuContainer->findOneBy('label', $navPageLabel);
+                                    if ($navPage) {
+                                        $navPage->setClass(trim($navPage->getClass() . ' skip-submenu'));
+                                        // Suppression du sous-menu, tout en gardant le statut actif.
+                                        if ($navPage->isActive(true)) {
+                                            $navPage->setActive(true);
+                                        }
+                                        $navPage->setPages([]);
+                                        /* // Autre possibilité : cacher le sous-menu.
+                                        $navPageChildren = $navPage->getChildren();
+                                        if ($navPageChildren) {
+                                            $navPageChildren->setVisible(false);
+                                        }
+                                        */
                                     }
-                                    $navPage->setPages([]);
-                                    /* // Autre possibilité : cacher le sous-menu.
-                                    $navPageChildren = $navPage->getChildren();
-                                    if ($navPageChildren) {
-                                        $navPageChildren->setVisible(false);
-                                    }
-                                    */
                                 }
                             }
 
@@ -356,7 +295,6 @@ $this->trigger('view.layout');
                                     // 'maxDepth' => $themeSetting('nav_depth') - 1,
                                     'maxDepth' => 1,
                             ])) ?>
-                        <?php endif; ?>
                         </nav>
                         <?php $useAuthDialog = (bool) $themeSetting('auth_dialog'); ?>
                         <ul class="header-controls">

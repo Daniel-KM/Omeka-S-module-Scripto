@@ -1,4 +1,15 @@
 <?php
+/**
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SiteRepresentation $site NO // FIXME $site for scripto layout.
+ */
+
+// Il n'y a pas de site, donc pas de themeSetting, etc., donc on force le site.
+if (empty($site)) {
+    require_once dirname(__DIR__, 3) . '/helper/theme-functions.php';
+    $site = prepareSite($this);
+}
+
 $this->scripto()->postTitle($item->displayTitle());
 
 /** @var \Scripto\Api\Representation\ScriptoMediaRepresentation[] $sMedias */
