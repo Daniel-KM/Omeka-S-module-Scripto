@@ -1,373 +1,467 @@
 <?php
 /**
- * @var \Zend\View\Renderer\PhpRenderer $this
- * @var \Omeka\Api\Representation\SiteRepresentation $site NO // FIXME $site for scripto layout.
+ * @var \Laminas\View\Renderer\PhpRenderer $this
+ * @var \Omeka\Api\Representation\SiteRepresentation $site
+ *
+ * Options :
+ * @var string $contentClass
  */
 
-if (empty($site)) $site = $this->api()->searchOne('sites', ['slug' => $this->params()->fromRoute('site-slug') ?: 'transcription'])->getContent() ?: $this->api()->read('sites', ['id' => $this->setting('default_site')])->getContent();
-$scriptoSiteProjectId = $this->params()->fromRoute('site-project-id') ?: 1;
-$scriptoProjectId = $this->params()->fromRoute('project-id') ?: 1;
-$totalScriptoProjects = $this->api()->search('scripto_projects')->getTotalResults();
-
 $plugins = $this->getHelperPluginManager();
-$translate = $plugins->get('translate');
-$escape = $plugins->get('escapeHtml');
-$hyperlink = $plugins->get('hyperlink');
+$user = $this->identity();
 $partial = $plugins->get('partial');
-$url = $plugins->get('url');
-$assetUrl = $plugins->get('assetUrl');
+$params = $plugins->get('params');
 
+// Check if the route is outside of the site (module Guest) to theme them.
+if (!$user && !empty($params->fromRoute('outside'))) {
+    echo $partial('layout-outside');
+    return;
+}
+
+$url = $plugins->get('url');
+$scripto = $plugins->get('scripto');
+$setting = $plugins->get('setting');
+$escape = $plugins->get('escapeHtml');
+$assetUrl = $plugins->get('assetUrl');
+$translate = $plugins->get('translate');
+$headLink = $plugins->get('headLink');
+$headScript = $plugins->get('headScript');
+$themeSetting = $plugins->get('themeSetting');
+$themeFunctions = $plugins->get('ThemeFunctions');
+
+$hasFeed = class_exists('Feed\Module', false);
+$hasGuest = $plugins->has('guestWidget');
+$hasMapping = $themeFunctions->hasMappingOrMarkers();
+$hasSelection = $plugins->has('selectionButton');
+$hasContactUs = $plugins->has('contactUs');
+$hasBibliography = $plugins->has('citation');
+$hasSearchHistory = $plugins->has('searchHistoryLink');
+$hasTwoFactorAuth = class_exists('TwoFactorAuth\Module', false);
+
+$navMenu = $plugins->has('navMenu') ? $plugins->get('navMenu') : null;
+$searchConfig = $plugins->has('getSearchConfig') ? $plugins->get('getSearchConfig')() : null;
+$formManager = $site->getServiceLocator()->get('FormElementManager');
+
+$simpleRoute = $themeFunctions->simpleRoute();
+$isResource = in_array($simpleRoute['controller'], ['item', 'item-set', 'media']);
+$isItemShow = $isResource && $simpleRoute['controller'] === 'item' && $simpleRoute['action'] === 'show';
+$isHomePage = $themeFunctions->isHomePage();
+$action = $params->fromRoute('action');
+$controller = $params->fromRoute('controller');
+$isItemSetBrowsePage = in_array($action, ['', 'browse']) && in_array($controller, ['Omeka\Controller\Site\ItemSet', 'item-set']);
+$isSearchPage = $action === 'search' && $controller === 'AdvancedSearch\Controller\SearchController';
+
+$isScripto = true;
+$isHomeScripto = $isScripto && $isHomePage;
+
+$siteUrl = $site->url();
 $siteSlug = $site->slug();
 
-$hasGuest = $plugins->has('guestWidget');
-$hasSearch = $plugins->has('searchingForm');
-// searchOne() cannot be used for modules and it is not allowed for anonymous.
-$module = $site->getServiceLocator()->get('Omeka\ModuleManager')->getModule('Feed');
-$hasFeed = $module && $module->getState() === \Omeka\Module\Manager::STATE_ACTIVE;
+$baseAssetUrl = $assetUrl('', null, false, false);
 
-$isHomePage = false;
-$isItemSetBrowsePage = false;
-$isScripto = true;
-$isHomeTranscription = false;
+try {
+    $feedUrl = $hasFeed ? $url('site/feed', ['feed' => 'rss'], ['force_canonical' => true], true) : null;
+} catch (\Exception $e) {
+    // Module Feed is not enabled.
+    $feedUrl = null;
+}
 
-$collectionsURL = $url('site/resource', ['site-slug' => 'patrimoine', 'controller' => 'item-set', 'action' => 'browse'], true);
-$expositionsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'expositions'], true);
-$colloquesURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'colloques'], true);
-$publicationsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'publications'], true);
-$bibliographieURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'bibliographie'], true);
-$aProposURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'a-propos'], true);
-$siteURL = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'accueil'], true);
-
-$contactURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'contact'], true);
-$planURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'plan-du-site'], true);
-$mentionsURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'mentions-legales'], true);
-$confidentialiteURL = $url('site/page', ['site-slug' => 'patrimoine', 'page-slug' => 'politique-de-confidentialite'], true);
-
-$projectsURL = $url('scripto-project', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'action' => 'browse'], true);
-$siteURL = $url('site/page', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'page-slug' => 'accueil'], true);
-$transcrireURL = $totalScriptoProjects <= 1
-    ? $url('scripto-project-id', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProjectId, 'action' => 'item'], true)
-    : $projectsURL;
-$projetURL = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'projet'], true);
-// Les consignes sont les mêmes pour tous les projets.
-// $consignesURL = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'consignes-de-transcription'], true);
-$consignesURL = $url('scripto-project-id', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'project-id' => /* $scriptoProjectId */ 1, 'action' => 'guidelines'], true);
-$creerCompteURL = $url('scripto', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'action' => 'create-account'], true);
-$contactURL2 = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'contact'], true);
-
-$this->scripto()->prepareSiteContext();
-$title = $this->scripto()->publicAppTitle();
-
+$siteTitle = $site->title();
+$this->htmlElement('html')->setAttribute('lang', $this->lang());
 $this->headMeta()
     ->setCharset('utf-8')
     ->appendName('viewport', 'width=device-width, initial-scale=1');
-$this->headTitle($title);
+$this->headTitle($siteTitle)
+    ->setSeparator(' · ')
+    ->append($this->setting('installation_title', 'Omeka S'));
+$headLink
+    ->prependStylesheet($assetUrl('css/styles.css'))
+    ->prependStylesheet($assetUrl('css/iconfonts.css', 'Omeka'))
+    ->prependStylesheet($assetUrl('vendor/slick-carousel/slick/slick.css'))
+    // ->prependStylesheet('//fonts.googleapis.com/css?family=Lato|Montserrat|Noto+Serif|Quicksand')
+    ->prependStylesheet('//fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,900&family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Quicksand:wght@300;400;500;600;700&display=swap');
 
-$this->headLink()
-    ->prependStylesheet('//fonts.googleapis.com/css?family=Lato|Montserrat|Noto+Serif|Quicksand|Source+Code+Pro')
-    ->appendStylesheet($assetUrl('css/iconfonts.css', 'Omeka'))
-    ->appendStylesheet($assetUrl('vendor/tablesaw/tablesaw.stackonly.css', 'Omeka'))
-    ->appendStylesheet($this->scripto()->publicAppStylesheet());
-
-$this->headScript()
+$headScript
+    ->prependFile($assetUrl('js/top.js'), 'text/javascript', ['defer' => 'defer'])
+    ->prependFile($assetUrl('js/scripts.js'), 'text/javascript', ['defer' => 'defer'])
+    ->prependFile($assetUrl('js/default.js'), 'text/javascript', ['defer' => 'defer'])
+    ->prependFile($assetUrl('js/global.js', 'Omeka'), 'text/javascript', ['defer' => 'defer'])
     ->prependFile($assetUrl('vendor/jquery/jquery.min.js', 'Omeka'))
-    // FIXME Asset url theme Salins.
-    ->prependFile('https://collections.maison-salins.fr/themes/salins/asset/js/top.js', 'text/javascript', ['defer' => 'defer'])
-    ->prependFile('https://collections.maison-salins.fr/themes/salins/asset/js/scripts.js', 'text/javascript', ['defer' => 'defer'])
+    ->appendFile($assetUrl('vendor/slick-carousel/slick/slick.min.js'), 'text/javascript', ['defer' => 'defer'])
+    ->appendFile($assetUrl('vendor/clipboard/clipboard.min.js'), 'text/javascript', ['defer' => 'defer'])
+;
 
-    ->appendFile($assetUrl('vendor/tablesaw/tablesaw.stackonly.jquery.js', 'Omeka'))
-    ->appendFile($assetUrl('js/scripto.js', 'Scripto'))
-    ->appendFile($assetUrl('js/public-app.js', 'Scripto'));
+if ($hasMapping) {
+    // Cf. Mapping view/mapping/site/index/browse, view/mapping/index/show et view/mapping/index/advanced search.
+    $headLink
+        ->appendStylesheet($assetUrl('node_modules/leaflet/dist/leaflet.css', 'Mapping'))
+        ->appendStylesheet($assetUrl('node_modules/leaflet.markercluster/dist/MarkerCluster.css', 'Mapping'))
+        ->appendStylesheet($assetUrl('node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css', 'Mapping'))
+        ->appendStylesheet($assetUrl('node_modules/leaflet.fullscreen/Control.FullScreen.css', 'Mapping'))
+    ;
+    $headScript
+        ->appendFile($assetUrl('node_modules/leaflet/dist/leaflet.js', 'Mapping'), 'text/javascript', ['defer' => 'defer'])
+        ->appendFile($assetUrl('node_modules/leaflet.markercluster/dist/leaflet.markercluster-src.js', 'Mapping'), 'text/javascript', ['defer' => 'defer'])
+        ->appendFile($assetUrl('node_modules/leaflet-providers/leaflet-providers.js', 'Mapping'), 'text/javascript', ['defer' => 'defer'])
+        ->appendFile($assetUrl('node_modules/leaflet.fullscreen/Control.FullScreen.js', 'Mapping'), 'text/javascript', ['defer' => 'defer'])
+        ->appendFile($assetUrl('js/control.fit-bounds.js', 'Mapping'), 'text/javascript', ['defer' => 'defer'])
+    ;
+    // FIXME Module Mapping uses the same ids for show and browse, so browse cannot be used twice in the item/show pages.
+    if ($isItemShow) {
+        $headScript
+            ->appendFile($assetUrl('js/mapping-show.js', 'Mapping'), 'text/javascript', ['defer' => 'defer']);
+    } else {
+        $headScript
+            ->appendFile($assetUrl('js/mapping-browse.js', 'Mapping'), 'text/javascript', ['defer' => 'defer'])
+            ->appendFile($assetUrl('js/advanced-search.js', 'Omeka'), 'text/javascript', ['defer' => 'defer']);
+    }
+}
 
-$user = $this->identity();
+if ($hasContactUs) {
+    $headLink
+        ->appendStylesheet($assetUrl('css/contact-us.css', 'ContactUs'));
+    $headScript
+        ->appendFile($assetUrl('js/contact-us.js', 'ContactUs'), 'text/javascript', ['defer' => 'defer']);
+}
+
+if ($hasSearchHistory) {
+    $headLink
+        ->appendStylesheet($assetUrl('css/search-history.css', 'SearchHistory'));
+    $headScript
+        ->appendFile($assetUrl('js/search-history.js', 'SearchHistory'), 'text/javascript', ['defer' => 'defer']);
+}
+
+if ($hasSelection) {
+    $headLink
+        ->appendStylesheet($assetUrl('css/selection.css', 'Selection'));
+    $headScript
+        ->appendFile($assetUrl('js/selection.js', 'Selection'), 'text/javascript', ['defer' => 'defer']);
+}
+
+if ($isHomeScripto) {
+    $headLink
+        ->appendStylesheet($assetUrl('vendor/tablesaw/tablesaw.stackonly.css', 'Omeka'))
+        ->appendStylesheet($scripto->publicAppStylesheet());
+
+    $headScript
+        ->appendFile($assetUrl('vendor/tablesaw/tablesaw.stackonly.jquery.js', 'Omeka'), 'text/javascript', ['defer' => 'defer'])
+        ->appendFile($assetUrl('js/scripto.js', 'Scripto'), 'text/javascript', ['defer' => 'defer'])
+        ->appendFile($assetUrl('js/public-app.js', 'Scripto'), 'text/javascript', ['defer' => 'defer']);
+}
+
+if ($hasGuest && !$user) {
+    $headLink
+        ->appendStylesheet($assetUrl('css/guest.css', 'Guest'));
+    $headScript
+        ->appendFile($assetUrl('js/guest.js', 'Guest'), 'text/javascript', ['defer' => 'defer']);
+}
+if ($hasTwoFactorAuth && !$user) {
+    $headLink
+        ->appendStylesheet($assetUrl('css/two-factor-auth.css', 'TwoFactorAuth'));
+    $headScript
+        ->appendFile($assetUrl('js/two-factor-auth.js', 'TwoFactorAuth'), 'text/javascript', ['defer' => 'defer']);
+}
+
 $userBar = $this->userBar();
+
+$this->trigger('view.layout');
 
 ?>
 <?= $this->doctype() ?>
-<?= $this->htmlElement('html')->setAttribute('lang', $this->lang()) ?>
-
+<?= $this->htmlElement('html') ?>
     <head>
         <?= $this->headMeta() ?>
         <?= $this->headTitle() ?>
+        <?php /*
+        <link rel="icon apple-touch-icon" type="image/png" sizes="192x192" href="<?= $baseAssetUrl ?>img/favicon-192x192.png"/>
+        */ ?>
+        <link rel="icon shortcut" type="image/vnd.microsoft.icon" href="<?= $baseAssetUrl ?>img/favicon.ico"/>
         <?= $this->headLink() ?>
         <?= $this->headStyle() ?>
-        <?= $this->headScript() ?>
+        <?= $headScript() ?>
+
+        <style>
+            <?php if ($accentColor = $themeSetting('accent_color')): ?>
+            a:link,
+            a:visited {
+                color: <?= $accentColor ?>
+            }
+            a:active,
+            a:hover {
+                color: <?= $accentColor ?>;
+                opacity: .75;
+            }
+            <?php endif; ?>
+        </style>
     </head>
 
     <?= $this->htmlElement('body')->appendAttribute('class', 'full-width transcription') ?>
         <?= $userBar ?>
 
-    <header>
-        <div class="hamburger-parent">
-            <div class="hamburger">
-                <a href="#" class="c-hamburger c-hamburger--htx">
-                    <span><?= $translate('Toggle menu') ?></span>
-                </a>
-            </div>
-        </div>
+        <div class="header-and-contents">
 
-        <a href="<?= $siteURL ?>" class="logo"></a>
-
-        <div class="baseline">
-            <span class="desktop">L’histoire au service<br/>de l’avenir coopératif</span>
-            <span class="mobile">Fondation Maison de Salins</span>
-        </div>
-
-        <div class="header-contents menu-closed">
-            <div class="header-menus-background"></div>
-            <div class="header-menus">
-                <ul class="header-menu">
-                <?php /*
-                    <li>
-                        <a href="<?= $collectionsURL ?>">Collections</a>
-                    </li>
-                    <li>
-                        <a href="<?= $expositionsURL ?>">Expositions</a>
-                    </li>
-                    <li class="with-submenu">
-                        <a href="#">Ressources</a>
-                        <div class="submenu">
-                            <div class="menu-items">
-                                <ul>
-                                    <li><a href="<?= $publicationsURL ?>">Publications</a></li>
-                                    <li><a href="<?= $bibliographieURL ?>">Bibliographie</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="<?= $menuCssSelectedForAPropos ?>">
-                        <a href="<?= $aProposURL ?>">À propos</a>
-                    </li>
-                    */ ?>
-                    <?php if ($totalScriptoProjects <= 1): ?>
-                    <li><a href="<?= $transcrireURL ?>">Transcrire les collections</a></li>
-                    <?php else: ?>
-                    <li class="with-submenu">
-                        <a href="#">Transcrire les collections</a>
-                        <div class="submenu">
-                            <div class="menu-items">
-                                <ul>
-                                    <li><?= $hyperlink($translate('Tous les projets'), $projectsURL) ?></li>
-                                    <?php /** @var \Scripto\Api\Representation\ScriptoProjectRepresentation $scriptoProject */ ?>
-                                    <?php foreach ($this->api()->search('scripto_projects')->getContent() as $scriptoProject): ?>
-                                    <li><?= $hyperlink($scriptoProject->title(), $url('scripto-project-id', ['site-slug' => $siteSlug, 'site-project-id' => $scriptoSiteProjectId, 'project-id' => $scriptoProject->id(), 'action' => 'item'], true)) ?></li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </div>
-                        </div>
-                    </li>
-                    <?php endif; ?>
-                    <li class="with-submenu">
-                        <a href="#">À propos</a>
-                        <div class="submenu">
-                            <div class="menu-items">
-                                <ul>
-                                    <li><a href="<?= $projetURL ?>">Le projet</a></li>
-                                    <li><a href="<?= $consignesURL ?>">Consignes de transcription</a></li>
-                                    <?php if (!$this->scripto()->apiClient()->userIsLoggedIn()): ?>
-                                    <li><a href="<?= $creerCompteURL ?>">Créer un compte</a></li>
-                                    <?php endif; ?>
-                                    <li><a href="<?= $contactURL2 ?>">Contact</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </li>
-                    <?php if ($this->scripto()->apiClient()->userIsLoggedIn()):
-                    // @see \Scripto\View\Helper\Scripto::logiinBar()
-                    $userInfo = $this->scripto()->apiClient()->queryUserInfo();
-                    $urlLogout = $url('scripto', ['action' => 'logout'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]);
-                    /** @var \Scripto\Form\ScriptoLogoutForm $wikiLogoutForm */
-                    $wikiLogoutForm = $site->getServiceLocator()->get('FormElementManager')->get(\Scripto\Form\ScriptoLogoutForm::class);
-                    $wikiLogoutForm->setAttribute('action', $urlLogout);
-                    ?>
-                    <li class="with-submenu">
-                        <a href="#"><?= $userInfo['name'] ?></a>
-                        <div class="submenu">
-                            <div class="menu-items">
-                                <ul>
-                                    <li><?= $hyperlink($translate('Dashboard'), $url('scripto', ['action' => 'index'], true)) ?></li>
-                                    <li><?= $hyperlink($translate('Contributions'), $url('scripto-user-contributions', ['action' => 'contributions', 'user-id' => $userInfo['name']], true)) ?></li>
-                                    <li><?= $hyperlink($translate('Watchlist'), $url('scripto-user-watchlist', ['action' => 'watchlist', 'user-id' => $userInfo['name']], true)) ?></li>
-                                    <li><?= $this->form($wikiLogoutForm) ?></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </li>
-                    <?php endif; ?>
-                </ul>
-                <ul class="header-controls">
-                    <li class="user <?= $this->scripto()->apiClient()->userIsLoggedIn() ? 'logged' : 'login' ?>">
-                        <?php
-                        if ($this->scripto()->apiClient()->userIsLoggedIn()):
-                            $userInfo = $this->scripto()->apiClient()->queryUserInfo();
-                            $urlLogged = $url('scripto', ['action' => 'index'], true);
-                        ?>
-                        <a href="<?= $urlLogged ?>">
-                            <span><?= $escape($userInfo['name']) ?></span>
+            <header>
+                <div class="hamburger-parent">
+                    <div class="hamburger">
+                        <a href="#" class="c-hamburger c-hamburger--htx">
+                            <span><?= $translate('Toggle menu') ?></span>
                         </a>
+                    </div>
+                </div>
+
+                <a href="<?= $siteUrl ?>" class="logo"></a>
+
+                <div class="baseline">
+                    <span>Maison de Salins</span>
+                    <span class="accroche"><?= $themeSetting('logo_title') ?></span>
+                </div>
+
+                <div class="header-contents menu-closed">
+                    <div class="header-menus-background"></div>
+                    <div class="header-menus">
+                        <nav class="menu-main">
+                        <?php if ($isScripto): ?>
+                        <?php // TODO Menu à déplacer en admin. ?>
+                        <?php require __DIR__ . '/menu.scripto.phtml'; ?>
                         <?php else: ?>
-                            <?php
-                            $urlLogin = $url('scripto', ['action' => 'login'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]);
+                        <?php // Menu standard.
+
+                            // Supprimer le sous-menu pour les expositions et les histoires
+                            $menu = $site->publicNav()->menu();
+                            $menuContainer = $menu->getContainer();
+                            foreach (['Expositions', 'Histoires'] as $navPageLabel) {
+                                $navPage =$menuContainer->findOneBy('label', $navPageLabel);
+                                if ($navPage) {
+                                    $navPage->setClass(trim($navPage->getClass() . ' skip-submenu'));
+                                    // Suppression du sous-menu, tout en gardant le statut actif.
+                                    if ($navPage->isActive(true)) {
+                                        $navPage->setActive(true);
+                                    }
+                                    $navPage->setPages([]);
+                                    /* // Autre possibilité : cacher le sous-menu.
+                                    $navPageChildren = $navPage->getChildren();
+                                    if ($navPageChildren) {
+                                        $navPageChildren->setVisible(false);
+                                    }
+                                    */
+                                }
+                            }
+
+                            // Ajout de la classe "with-submenu" au premier niveau le cas échéant.
+                            foreach ($menuContainer->getPages() as $navPage) {
+                                if ($navPage->hasPages()) {
+                                    $navPage->setClass(trim($navPage->getClass() . ' with-submenu'));
+                                }
+                            }
+
+                            // Adaptations finales non encore intégrés (TODO Utiliser findAllBy()).
+                            // array_walk($menuContainer->findAllBy('label', '[Page manquante]'));
+                            $replace = [
+                                // Suppression des pages manquantes ou privées.
+                                '~<li>\s*<a href="#">\\[Page manquante\\]</a>\s*</li>~' => '',
+                                '~<li>\s*<a href="#">\\[Missing page\\]</a>\s*</li>~' => '',
+                            ];
+                            // Si page d'accueil, supprimer le selected.
+                            if ($isHomePage) {
+                                $replace['~ selected"~'] = '"';
+                            }
+
                             ?>
-                        <a href="<?= $urlLogin ?>" >
-                            <span>Identifiez-vous</span>
-                        </a>
+                            <?= preg_replace(array_keys($replace), array_values($replace),
+                                $site->publicNav()->menu()->renderMenu(null, [
+                                    'ulClass' => 'header-menu',
+                                    'liActiveClass' => 'selected',
+                                    // Le css ne gère qu'un seul niveau.
+                                    // 'maxDepth' => $themeSetting('nav_depth') - 1,
+                                    'maxDepth' => 1,
+                            ])) ?>
                         <?php endif; ?>
-                    </li>
-                    <?php if ($hasFeed): ?>
-                        <li class="rss">
-                            <a href="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>">
-                                <span>Abonnez-vous au fil RSS</span>
-                            </a>
-                        </li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </div>
+                        </nav>
+                        <?php $useAuthDialog = (bool) $themeSetting('auth_dialog'); ?>
+                        <ul class="header-controls">
+                            <li class="user <?= $user ? 'logged' : 'login' ?><?= $useAuthDialog ? '' : ' no-dialog' ?>">
+                                <?php
 
-        <?php // Cela doit rester dans le header pour que le popup s'affiche en gardant le logo. ?>
-        <?php // TODO Permettre l'utilisation d'un div. ?>
-        <?php if ($hasSearch && ($isHomePage || $isItemSetBrowsePage)): ?>
-            <?= $this->searchingForm('search/search-form-popup') ?>
-        <?php endif; ?>
+                                if ($isScripto): // Login Scripto.
+                                    if ($scripto->apiClient()->userIsLoggedIn()):
+                                        $urlLogged = $url('scripto', ['action' => 'index'], true);
+                                        /** @see \Scripto\ViewHelper\Scripto::loginBar() */
+                                        $userInfo = $scripto->apiClient()->queryUserInfo();
+                                    ?>
+                                <a href="<?= $urlLogged ?>">
+                                    <span><?= $escape($userInfo['name']) ?></span>
+                                </a>
+                                    <?php else: ?>
+                                        <?php
+                                        $urlLogin = $url('scripto', ['action' => 'login'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]);
+                                        ?>
+                                <a href="<?= $urlLogin ?>" >
+                                    <span>Identifiez-vous</span>
+                                </a>
+                                    <?php endif; ?>
 
-    </header>
+                                <?php else: // Login Omeka. ?>
 
-<?php /*
-    <div class="site-header" role="banner">
-        <div class="wrapper">
-            <?php // echo $this->hyperlink($title, $this->url('scripto', ['action' => 'index'], true), ['class' => 'site-title']); ?>
-            <nav class="top-nav">
-                <input type="checkbox" id="nav-trigger" class="nav-trigger" aria-label="<?php echo $this->translate('Toggle menu'); ?>"/>
-                <label for="nav-trigger">
-                    <span class="menu-icon"></span>
-                </label>
-                <div class="trigger">
-<?php //* Sous header ?>
-                    <div class="site-nav">
-                        <?php echo $this->scripto()->publicAppProjectLink(); ?>
-                        <?php echo $this->scripto()->publicAppSiteLink(); ?>
-                        <?php echo $this->scripto()->loginBar(); ?>
-                        <?php if (!$this->scripto()->apiClient()->userIsLoggedIn()): ?>
-                        <?php echo $this->hyperlink($this->translate('Create account'), $this->url('scripto', ['action' => 'create-account'], true), ['class' => 'page-link']); ?>
-                        <?php endif; ?>
-                    </div>
-<?php // ?>
-                    <?php if (isset($project)): ?>
-                    <?php $consignesURL = $url('site/page', ['site-slug' => $siteSlug, 'page-slug' => 'consignes-de-transcription'], true); ?>
+                                    <?php
+                                    if ($user):
+                                        $urlLogged = $hasGuest ? $url('site/guest', ['action' => 'me'], true) : $url('admin/id', ['controller' => 'user', 'id' => $user->getId()]);
+                                    ?>
+                                <a href="<?= $urlLogged ?>">
+                                    <span><?= $escape($user->getName()) ?></span>
+                                </a>
+                                    <?php
+                                    else:
+                                         $urlLogin = $hasGuest ? $url('site/guest/anonymous', ['action' => 'login'], true) : $url('login');
+                                     ?>
+                                        <?php if ($hasGuest && $useAuthDialog): ?>
+                                 <button type="button" class="button-login" data-url="<?= $url('api/guest', ['action' => 'dialog'], ['query' => ['name' => 'login', 'site_slug' => $site->slug()]], true) ?>">
+                                    <span>Identifiez-vous</span>
+                                 </button>
+                                        <?php else: ?>
+                                <a href="<?= $urlLogin ?>">
+                                     <span>Identifiez-vous</span>
+                                </a>
+                                        <?php endif; ?>
 
-                    <div class="project-nav">
-                        <h2><?php echo $project->link($project->title()); ?></h2>
-                        <ul>
-                            <li><?php echo $project->link($this->translate('Project guidelines'), 'guidelines'); ?></li>
-                            <?php /*
-                            <li><?php echo $this->hyperlink($this->translate('Project guidelines'), $consignesURL); ?></li>
-                            // ?>
-                            <li><?php echo $project->link($this->scripto()->translate($project->itemType(), 'Browse items')); ?></li>
+                                    <?php endif; ?>
+
+                                <?php endif; ?>
+                            </li>
+                            <li class="search">
+                                <button type="button" class="button-search">
+                                    <span>Rechercher</span>
+                                </button>
+                            </li>
                         </ul>
-                        <?php
-                        $searchAction = isset($sItem) ? $sItem->url() : $project->url();
-                        $searchQuery = $this->params()->fromQuery('search');
-                        $searchLabel = $this->escapeHtml(sprintf($this->translate('Search %s'), (isset($sItem) ? 'item media' : 'project items')));
-                        ?>
-                        <form id="scripto-search" class="wrapper" action="<?php echo $this->escapeHtml($searchAction); ?>">
-                            <input type="text" name="search" value="<?php echo $this->escapeHtml($searchQuery); ?>" aria-label="<?php echo $searchLabel; ?>" placeholder="<?php echo $searchLabel; ?>">
-                            <button type="submit"><?php echo $this->escapeHtml($this->translate('Search')); ?></button>
-                        </form>
                     </div>
+                </div>
+
+                <?php // Formulaire de recherche complet disponible sur toutes les pages. ?>
+                <?php // Cela doit rester dans le header pour que le popup s'affiche en gardant le logo. ?>
+                <?php // TODO Permettre l'utilisation d'un div et de la recherche par défaut. ?>
+                <?php if ($searchConfig): ?>
+                <?= $searchConfig->renderForm([
+                    'template' => 'search/search-form-popup',
+                ]) ?>
+                <?php endif; ?>
+
+            </header>
+
+            <?php // Formulaire de recherche rapide disponible sur toutes les pages. ?>
+            <div class="search-panel-menu">
+                <div class="search-panel-menu-contents">
+                    <a href="#" class="search-panel-menu-close-button"></a>
+                    <?php if ($searchConfig): ?>
+                    <?= $searchConfig->renderForm([
+                        // Simple + champ des caisses (propriété paramétrée dans le thème).
+                        'template' => 'search/search-form-headroom',
+                        'variant' => 'simple',
+                    ]) ?>
                     <?php endif; ?>
                 </div>
-            </nav>
-        </div>
-    </div>
-*/ ?>
-
-        <?php if ($hasSearch && ($isHomePage || $isItemSetBrowsePage)): ?>
-            <?= $this->searchingForm('search/search-form-quick') ?>
-        <?php endif; ?>
-
-        <main id="content" class="page-content" aria-label="<?php echo $this->escapeHtml($this->translate('Content')); ?>">
-            <div class="wrapper">
-                <?php echo $this->messages(); ?>
-                <article class="post">
-                    <div class="post-header">
-                        <?php if ($this->scripto()->postTitle()): ?>
-                        <h1 class="post-title"><?php echo $this->scripto()->postTitle(); ?></h1>
-                        <?php endif; ?>
-                        <?php if ($this->scripto()->postSubtitle()): ?>
-                        <h2 class="post-subtitle"><?php echo $this->scripto()->postSubtitle(); ?></h2>
-                        <?php endif; ?>
-                    </div>
-                    <div class="post-content">
-                        <?php echo $this->content; ?>
-                    </div>
-                </article>
             </div>
-        </main>
 
-        <?php /*
-        <footer class="site-footer h-card">
-            <div class="wrapper">
-                <h2 class="footer-heading"><?php echo $title; ?></h2>
-                <div id="back-to-top"><a href="#content"><?php echo $this->translate('Back to top'); ?></a></div>
-            </div>
-        </footer> */ ?>
+            <main id="content" class="contents page-content <?= $contentClass ?? '' ?>" aria-label="<?= $escape($translate('Content')) ?>">
+                <div class="wrapper">
+                    <?= $this->messages() ?>
+                    <article class="post">
+                        <div class="post-header">
+                            <?php if ($scripto->postTitle()): ?>
+                            <h1 class="post-title"><?= $scripto->postTitle() ?></h1>
+                            <?php endif; ?>
+                            <?php if ($scripto->postSubtitle()): ?>
+                            <h2 class="post-subtitle"><?= $scripto->postSubtitle() ?></h2>
+                            <?php endif; ?>
+                        </div>
+                        <div class="post-content">
+                            <?= $this->content ?>
+                        </div>
+                    </article>
+                </div>
+            </main>
+
+        </div><?php // fin header-and-contents ?>
 
         <footer>
             <div class="footer-contents">
-                <ul class="footer-menu">
-                    <?php if (isset($this->ThemeSettingToLinks)) : ?>
-                        <?php foreach ($this->ThemeSettingToLinks('footer_links') as $link): ?>
-                            <li>
-                                <a href="<?= $link['url'] ?>"><?= $link['label'] ?></a>
-                            </li>
+                <a href="https://collections.maison-salins.fr/" class="footer-logo"></a>
+                <nav class="nav-footer" role="navigation">
+                <?php if ($navMenu ? $footerContent = $navMenu('footer', ['ulClass' => 'navigation footer-menu']) : null): ?>
+	                <?= $footerContent ?>
+                <?php else: ?>
+                    <ul class="navigation footer-menu">
+                        <?php foreach ($themeFunctions->themeSettingToLinks('footer_links') as $link): ?>
+                        <li><a href="<?= $link['url'] ?>"><?= $link['label'] ?></a></li>
                         <?php endforeach; ?>
-                    <?php else: ?>
-                        <li><a href="<?= $contactURL ?>">Contact</a></li>
-                        <li><a href="<?= $planURL ?>">Plan d'archive</a></li>
-                        <li><a href="<?= $mentionsURL ?>">Mentions légales et CGU</a></li>
-                        <li><a href="<?= $confidentialiteURL ?>">Politique de confidentialté</a></li>
-                    <?php endif ?>
-                </ul>
+                    </ul>
+                    <?php endif; ?>
+                </nav>
                 <div class="cd-top back-to-top"><a href="#"></a></div>
             </div>
         </footer>
 
         <?php
-        // $urlLogin = $hasGuest ? $url('site/guest/anonymous', ['action' => 'login'], true) : $url('login');
-        // echo $partial('common/login-form', ['form' => $loginForm]);
-        $urlLogin = $url('scripto', ['action' => 'login'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]);
-        /** @var \Scripto\Form\ScriptoLoginForm $wikiLoginForm */
-        $wikiLoginForm = $site->getServiceLocator()->get('FormElementManager')
-            ->get(\Scripto\Form\ScriptoLoginForm::class)
-            ->setAttribute('action', $urlLogin);
-        $form = $loginForm = $wikiLoginForm;
-        $isScripto = true;
-        // FIXME Partial is not working.
-        include dirname(dirname(dirname(dirname(__DIR__)))) . '/themes/salins/view/common/login-form.phtml';
+        if ($isScripto) {
+            $urlLogin = $url('scripto', ['action' => 'login'], ['query' => ['redirect' => $url(null, [], $this->params()->fromQuery(), true)]]);
+            /** @var \Scripto\Form\ScriptoLoginForm $wikiLoginForm */
+            $wikiLoginForm = $formManager
+                ->get(\Scripto\Form\ScriptoLoginForm::class)
+                ->setAttribute('action', $urlLogin);
+            $loginForm = $wikiLoginForm;
+        } else {
+            $use2faDialog = $hasTwoFactorAuth && $setting('twofactorauth_use_dialog');
+            if ($themeSetting('auth_register_dialog')) {
+                $urlLogin = $use2faDialog ? $url('login') : $url('api/guest', ['action' => 'login'], true);
+            } else {
+                $urlLogin = $hasGuest && !$use2faDialog ? $url('site/guest/anonymous', ['action' => 'login'], true) : $url('login');
+            }
+            /** @var \Omeka\Form\LoginForm $loginForm */
+            $loginForm = $formManager
+                ->get(\Omeka\Form\LoginForm::class)
+                ->setAttribute('action', $urlLogin);
+        }
+        echo $partial('common/dialog/login', ['form' => $loginForm, 'isScripto' => $isScripto] + $this->vars()->getArrayCopy());
         ?>
 
         <?php if ($hasFeed): ?>
-            <div class="popup popup-suscribe-rss rss">
-                <div class="popup-background">
-                    <div class="popup-panel">
-                        <div class="popup-header">
-                            <a href="#" class="popup-header-close-button"></a>
-                        </div>
-                        <div class="popup-contents">
-                            <p>Souhaitez-vous vous abonnez à notre fil RSS afin d’être tenu informé des dernières publications et actualités ?</p>
-                        </div>
-                        <div class="popup-footer">
-                            <a href="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>" class="rss-url" target="_blank">Consulter</a>
-                            <!--
-                            <a href="#" class="clipboard-copy-btn" data-clipboard-text="<?= $url('site/feed', ['site-slug' => 'patrimoine', 'feed' => 'rss'], true) ?>">Copier l'URL</a>
-                            -->
-                            <a href="#" class="rss-close-popup outlined">Fermer</a>
-                        </div>
+        <div class="popup popup-suscribe-rss rss">
+            <div class="popup-background">
+                <div class="popup-panel">
+                    <div class="popup-header">
+                        <a href="#" class="popup-header-close-button"></a>
+                    </div>
+                    <div class="popup-contents">
+                        <p>Souhaitez-vous vous abonnez à notre fil RSS afin d’être tenu informé des dernières publications et actualités ?</p>
+                    </div>
+                    <div class="popup-footer">
+                        <a href="<?= $feedUrl ?>" class="rss-url" target="_blank">Consulter</a>
+                        <a href="#" class="clipboard-copy-btn" data-clipboard-text="<?= $feedUrl ?>">Copier l'Url</a>
+                        <a href="#" class="rss-close-popup outlined">Fermer</a>
                     </div>
                 </div>
             </div>
+        </div>
         <?php endif; ?>
 
-    </body>
+        <?php if ($hasBibliography): ?>
+        <div class="popup popup-copy-notice">
+            <div class="popup-background">
+                <div class="popup-panel">
+                    <div class="popup-header">
+                        <a href="#" class="popup-header-close-button"></a>
+                    </div>
+                    <div class="popup-contents">
+                        <a class="download-notice-button" download="download" target="_self" data-format="csv" href="<?= $_SERVER['REQUEST_URI'] ?>.csv">Télécharger CSV</a>
+                        <a class="download-notice-button" download="download" target="_self" data-format="tsv" href="<?= $_SERVER['REQUEST_URI'] ?>.tsv">Télécharger TSV</a>
+                        <!--
+                        <a class="download-notice-button" download="download" target="_self" data-format="bibtex" href="<?= $_SERVER['REQUEST_URI'] ?>.bib">Télécharger BIBTEX</a>
+                        <a class="download-notice-button" download="download" target="_self" data-format="ris" href="<?= $_SERVER['REQUEST_URI'] ?>.ris">Télécharger RIS</a>
+                        -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+	</body>
 </html>
