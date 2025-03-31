@@ -80,6 +80,7 @@ $this->headScript()
     ->appendFile($assetUrl('js/public-app.js', 'Scripto'));
 
 $user = $this->identity();
+$userBar = $this->userBar();
 
 ?>
 <?= $this->doctype() ?>
@@ -94,6 +95,7 @@ $user = $this->identity();
     </head>
 
     <?= $this->htmlElement('body')->appendAttribute('class', 'full-width transcription') ?>
+        <?= $userBar ?>
 
     <header>
         <div class="hamburger-parent">
